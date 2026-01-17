@@ -87,7 +87,7 @@ flowchart TB
         gemini["Gemini 2.5 Pro"] --> raw[Raw Synthetic Data]
         raw --> psych["2 Psychiatrists<br>Review & Label"]
         psych --> data[/"Approved<br>Synthetic Data"/]
-        data -.->|characterize| char["Response<br>Characterization<br>(Fig 3, S3)"]
+        data -.->|characterize| char["Response<br>Characterization<br>(Fig 3, S4)"]
     end
     
     subgraph P1[Phase 1: Classification]
@@ -102,8 +102,8 @@ flowchart TB
     end
     
     subgraph P3[Phase 3: Figures]
-        metrics --> perf["Performance<br>Characteristics<br>(Fig 4, S4-S9)"]
-        metrics --> risk["Risk Analysis<br>(Fig 5, S10)"]
+        metrics --> perf["Performance<br>Characteristics<br>(Fig 4, S5-S10)"]
+        metrics --> risk["Risk Analysis<br>(Fig 5, S11)"]
     end
     
     style cache fill:#e1f5fe,stroke:#01579b,stroke-width:3px
@@ -127,10 +127,10 @@ flowchart TB
 
 | Figure | Description | Script |
 |--------|-------------|--------|
-| **S3** | Sankey diagrams (expert review flow) | `analysis/data_validation/sankey_diagram_configs.py` |
-| **S4-S6** | Binary confusion matrices | `analysis/model_performance/generate_confusion_matrix_figures.py` |
-| **S7-S9** | Per-statement accuracy heatmaps | `analysis/model_performance/generate_model_statement_matrices.py` |
-| **S10** | P2 across all failure multiplier values | `analysis/comparative_analysis/figure_s10_p2_by_model_size_across_m.py` |
+| **S4** | Sankey diagrams (expert review flow) | `analysis/data_validation/sankey_diagram_configs.py` |
+| **S5-S7** | Binary confusion matrices | `analysis/model_performance/generate_confusion_matrix_figures.py` |
+| **S8-S10** | Per-statement accuracy heatmaps | `analysis/model_performance/generate_model_statement_matrices.py` |
+| **S11** | P2 across all failure multiplier values | `analysis/comparative_analysis/figure_s11_p2_by_model_size_across_m.py` |
 
 ## Output Structure
 
