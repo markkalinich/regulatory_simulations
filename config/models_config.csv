@@ -1,0 +1,140 @@
+family,size,version,lm_studio_id,gemma_generation,model_type,enabled,param_billions,architecture,quantization,publisher,Base_Model_LM_Studio_ID,Base_Model_Type
+gemma,270m-it,3.0,google.gemma-3-270m-it,3.0,IT,True,0.27,gemma3,Q8_0,DevQuasar,google.gemma-3-270m,PT
+gemma,270m-pt,3.0,google.gemma-3-270m,3.0,PT,True,0.27,gemma3,Q8_0,DevQuasar,,
+gemma,1b-it,3.0,google.gemma-3-1b-it,3.0,IT,True,1.0,gemma3,Q8_0,DevQuasar,google.gemma-3-1b-pt,PT
+gemma,1b-pt,3.0,google.gemma-3-1b-pt,3.0,PT,True,1.0,gemma3,Q8_0,DevQuasar,,
+gemma,4b-it,3.0,google.gemma-3-4b-it,3.0,IT,True,4.0,gemma3,Q8_0,DevQuasar,google.gemma-3-4b-pt,PT
+gemma,4b-pt,3.0,google.gemma-3-4b-pt,3.0,PT,True,4.0,gemma3,Q8_0,DevQuasar,,
+gemma,12b-it,3.0,google.gemma-3-12b-it,3.0,IT,True,12.0,gemma3,Q8_0,DevQuasar,google.gemma-3-12b-pt,PT
+gemma,12b-pt,3.0,google.gemma-3-12b-pt,3.0,PT,True,12.0,gemma3,Q8_0,DevQuasar,,
+gemma,27b-it,3.0,google.gemma-3-27b-it,3.0,IT,True,27.0,gemma3,Q8_0,DevQuasar,google.gemma-3-27b-pt,PT
+gemma,27b-pt,3.0,google.gemma-3-27b-pt,3.0,PT,True,27.0,gemma3,Q8_0,DevQuasar,,
+gemma1,2b-it,1.0,gemma-2b-it,1.0,IT,True,2.0,gemma,Q8_0,MaziyarPanahi,gemma-2b,PT
+gemma1,2b-pt,1.0,gemma-2b,1.0,PT,True,2.0,gemma,Q8_0,MaziyarPanahi,,
+gemma1,7b-it,1.1,gemma-1.1-7b-it,1.0,IT,True,7.0,gemma,Q8_0,bartowski,google_-_gemma-7b,PT
+gemma1,7b-pt,1.0,google_-_gemma-7b,1.0,PT,True,7.0,gemma,Q6_K,RichardErkhov,,
+gemma2,2b-it,2.0,gemma-2-2b-it,2.0,IT,True,2.0,gemma2,Q8_0,bartowski,gemma-2-2b,PT
+gemma2,2b-pt,2.0,gemma-2-2b,2.0,PT,True,2.6,gemma2,Q8_0,QuantFactory,,
+gemma2,9b-it,2.0,gemma-2-9b-it,2.0,IT,True,9.0,gemma2,Q8_0,bartowski,gemma-2-9b,PT
+gemma2,9b-pt,2.0,gemma-2-9b,2.0,PT,True,9.0,gemma2,Q8_0,QuantFactory,,
+gemma2,27b-it,2.0,gemma-2-27b-it,2.0,IT,True,27.0,gemma2,Q8_0,bartowski,gemma-2-27b,PT
+gemma2,27b-pt,2.0,gemma-2-27b,2.0,PT,True,27.0,gemma2,Q8_0,tensorblock,,
+gemma2,1b,2.0,gemma-1b,2.0,PT,False,2.0,gemma2,Q8_0,mradermacher,,
+gemma3n,2b-it,3.0,gemma-3n-e2b-it,3.0,IT,True,4.5,gemma3n,Q8_0,unsloth,gemma-3n-e2b,PT
+gemma3n,2b-pt,3.0,gemma-3n-e2b,3.0,PT,True,4.5,gemma3n,Q8_0,mradermacher,,
+gemma3n,4b-it,3.0,gemma-3n-e4b-it,3.0,IT,True,6.9,gemma3n,Q8_0,unsloth,google/gemma-3n-e4b,PT
+gemma3n,4b-medical,3.0,medical-gemma-3n-4b,3.0,Medical,True,6.9,gemma3n,,ericrisco,gemma-3n-e4b-it,IT
+gemma3n,4b-mentis,3.0,gemma-3n-finetune-mentis,3.0,Mental Health,True,6.9,gemma3n,Q8_0,kelesfatih,gemma-3n-e4b-it,IT
+medgemma,4b-it,3.0,google.medgemma-4b-it,3.0,MedGemma,True,4.0,gemma3,Q8_0,DevQuasar,google.gemma-3-4b-pt,PT
+medgemma,27b-it,3.0,google.medgemma-27b-it,3.0,MedGemma,True,27.0,gemma3,Q8_0,DevQuasar,google.gemma-3-27b-pt,PT
+medgemma,27b-text-it,3.0,google.medgemma-27b-text-it,3.0,MedGemma,True,27.0,gemma3,Q8_0,DevQuasar,google.gemma-3-27b-pt,PT
+shieldgemma,2b,2.0,shieldgemma-2b,2.0,ShieldGemma,True,2.6,gemma2,Q8_0,QuantFactory,gemma-2-9b,PT
+shieldgemma,4b-it,3.0,shieldgemma-2-4b-it,3.0,ShieldGemma,True,4.0,gemma3,,infil00p,google.gemma-3-4b-it,IT
+shieldgemma,9b,2.0,shieldgemma-9b,2.0,ShieldGemma,True,9.2,gemma2,Q8_0,QuantFactory,gemma-2-9b,PT
+shieldgemma,27b,2.0,shieldgemma-27b,2.0,ShieldGemma,True,27.0,gemma2,Q8_0,mradermacher,gemma-2-27b,PT
+mental_health,270m,3.0,gemma3-270m-mental-health-fine-tuned,3.0,Mental Health,True,0.268,gemma3,BF16,Skshackster,google.gemma-3-270m,PT
+mental_health,1b,3.0,gemma3-1b-mental-health-fine-tuned,3.0,Mental Health,True,1.0,gemma3,Q8,Skshackster,google.gemma-3-1b-it,IT
+mental_health,guelgamesh01_-_gemma-2b-it-finetuned-mental-health-qa,1.0,guelgamesh01_-_gemma-2b-it-finetuned-mental-health-qa,1.0,Mental Health,True,2.0,gemma,Q8_0,RichardErkhov,gemma-2b-it,IT
+mental_health,gemma-2b-unsloth-mental-health-merged,1.0,gemma-2b-unsloth-mental-health-merged,1.0,Mental Health,True,2.0,gemma,Q8_0,mradermacher,gemma-2b-it,IT
+mental_health,ecdev_-_gemma-2b-instruct-ft-mental-health-counseling-conversations,1.0,ecdev_-_gemma-2b-instruct-ft-mental-health-counseling-conversations,1.0,Mental Health,True,2.0,gemma,Q8_0,RichardErkhov,gemma-2b-it,IT
+mental_health,gemma-psychology-finetune,1.0,gemma-psychology-finetune,1.0,Mental Health,True,2.0,gemma,Q8_0,mradermacher,gemma-2b-it,IT
+mental_health,gemma-mental-health-i1,1.0,gemma-mental-health-i1,1.0,Mental Health,True,2.0,gemma,Q6_K,mradermacher,,UNKNOWN
+mental_health,gemma-2-2b-it-therapist,2.0,gemma-2-2b-it-therapist,2.0,Mental Health,True,2.0,gemma2,Q8_0,mradermacher,gemma-2-2b-it,IT
+gemma_therapy,268m-therapist,3.0,gemma-3-finetune-therapist,3.0,Mental Health,True,0.268,gemma3,Q8_0,mradermacher,google.gemma-3-270m-it,IT
+gemma_therapy,1b-emotional,3.0,gemma3-emotional_uncensored-1b,3.0,Mental Health,True,1.0,gemma3,Q8_0,mradermacher,google.gemma-3-1b-it,IT
+gemma_therapy,4.5b-trauma,3n,child_trauma_assessment_gemma,3n,Mental Health,True,4.5,gemma3n,Q8_0,SoufianeDahimi,gemma-3n-e2b-it,IT
+gemma_therapy,9b-psy10k,2.0,gemma2-9b-it-psy10k-mental_health,2.0,Mental Health,True,9.0,gemma2,Q8_0,mradermacher,gemma-2-9b-it,IT
+gemma_therapy,9b-ataraxy,2.0,gemma2-ataraxy-psycho-9b,2.0,Mental Health,True,9.0,gemma2,Q8_0,mradermacher,gemma-2-9b-it,IT
+gemma_therapy,12b-therapist,3.0,therapist1-gemma3-12b-qvo,3.0,Mental Health,True,12.0,gemma3,Q8,reedmayhew,google.gemma-3-12b-it,IT
+qwen,0.6b,3.0,qwen3-0.6b,3.0,IT,True,0.6,qwen3,Q8_0,Qwen,,PT
+qwen,1.7b,3.0,qwen/qwen3-1.7b,3.0,IT,True,1.7,qwen3,Q6_K,qwen,,PT
+qwen,4b,3.0,qwen/qwen3-4b,3.0,IT,True,4.0,qwen3,Q4_K_M,qwen,,PT
+qwen,8b,3.0,qwen/qwen3-8b,3.0,IT,True,8.0,qwen3,Q4_K_M,qwen,,PT
+qwen,14b,3.0,qwen/qwen3-14b,3.0,IT,True,14.0,qwen3,Q4_K_M,qwen,,PT
+qwen,32b,3.0,qwen/qwen3-32b,3.0,IT,True,32.0,qwen3,Q4_K_M,qwen,,PT
+qwen_mental_health,0.6b,3.0,qwen-0.6b-mentalhealth-support,3.0,Mental Health,True,0.6,qwen3,Q8_0,mradermacher,qwen3-0.6b,IT
+qwen_medical,1.7b,3.0,qwen3-medical-1.7b,3.0,Medical,True,1.7,qwen3,Q8_0,AMLAN69,qwen/qwen3-1.7b,IT
+qwen_medical,4b-reasoning,3.0,medicalqwen3-reasoning-4b,3.0,Medical,True,4.0,qwen3,Q8_0,mradermacher,qwen/qwen3-4b,IT
+qwen_medical,4b-grpo,3.0,qwen3-medical-grpo,3.0,Medical,True,4.0,qwen3,Q8_0,prithivMLmods,,PT
+qwen_medical,8b-reasoning,3.0,qwen3-8b-medical-reasoning,3.0,Medical,True,8.0,qwen3,Q8_0,mradermacher,qwen/qwen3-8b,IT
+qwen_medical,8b-ii,3.0,ii-medical-8b-1706,3.0,Medical,True,8.0,qwen3,Q8_0,Intelligent-Internet,qwen/qwen3-8b,IT
+llama3.2,1b-pt,3.2,llama-3.2-1b,3.2,PT,True,1.0,llama,Q8_0,QuantFactory,,
+llama3.2,1b-it,3.2,llama-3.2-1b-instruct,3.2,IT,True,1.0,llama,Q8_0,lmstudio-community,llama-3.2-1b,PT
+llama3.2,3b-pt,3.2,llama-3.2-3b,3.2,PT,True,3.0,llama,Q8_0,QuantFactory,,
+llama3.2,3b-it,3.2,llama-3.2-3b-instruct,3.2,IT,True,3.0,llama,Q8_0,lmstudio-community,llama-3.2-3b,PT
+llama3.1,8b-pt,3.1,meta-llama-3.1-8b,3.1,PT,True,8.0,llama,Q8_0,QuantFactory,,
+llama3.1,8b-it,3.1,meta-llama-3.1-8b-instruct,3.1,IT,True,8.0,llama,Q8_0,lmstudio-community,meta-llama-3.1-8b,PT
+llama3,8b-pt,3.0,meta-llama-3-8b,3.0,PT,True,8.0,llama,Q8_0,QuantFactory,,
+llama3,8b-it,3.0,meta-llama-3-8b-instruct,3.0,IT,True,8.0,llama,Q4_K_M,lmstudio-community,meta-llama-3-8b,PT
+llama2,7b-pt,2.0,llama-2-7b,2.0,PT,True,7.0,llama,Q8_0,TheBloke,,
+llama2,7b-it,2.0,llama-2-7b-chat,2.0,IT,True,7.0,llama,Q8_0,TheBloke,llama-2-7b,PT
+llama2,13b-pt,2.0,llama-2-13b,2.0,PT,True,13.0,llama,Q8_0,TheBloke,,
+llama2,13b-it,2.0,llama-2-13b-chat,2.0,IT,True,13.0,llama,Q8_0,TheBloke,llama-2-13b,PT
+llama2,70b-it,2.0,llama-2-70b-chat,2.0,IT,True,70.0,llama,Q5_K_M,TheBloke,llama-2-70b,PT
+llama3.1,70b-it,3.1,lmstudio-community/meta-llama-3.1-70b-instruct,3.1,IT,True,70.0,llama,Q6_K,lmstudio-community,,PT
+llama3.3,70b,3.3,meta/llama-3.3-70b,3.3,IT,True,70.0,llama,Q4_K_M,meta,,PT
+llama_mental_health,7b-mentallama,2.0,mentallama-chat-7b,2.0,Mental Health,True,6.7,llama,Q8_0,QuantFactory,llama-2-7b-chat,IT
+llama_mental_health,13b-mentallama,2.0,klyang_mentallama-chat-13b,2.0,Mental Health,True,13.0,llama,Q8_0,tensorblock,llama-2-13b-chat,IT
+llama_mental_health,1b-mental-health,3.2,bunnybosz_-_llama-3.2-1b-fine-tuned-model-mental-health,3.2,Mental Health,True,1.0,llama,Q8_0,RichardErkhov,llama-3.2-1b-instruct,IT
+llama_mental_health,3b-mental-health-chatbot,3.2,mac16661_-_llama-3.2-3b-it-mental-health-chatbot-merged-and-exported,3.2,Mental Health,True,3.0,llama,Q8_0,RichardErkhov,llama-3.2-3b-instruct,IT
+llama_mental_health,8b-mental-health-classification,3.1,llama-3.1-8b-instruct-mental-health-classification,3.1,Mental Health,True,8.0,llama,Q8_0,tensorblock,meta-llama-3.1-8b-instruct,IT
+llama_mental_health,8b-mental-mix-sft,3.1,mental_llama3.1-8b-mix-sft,3.1,Mental Health,True,8.0,llama,Q8_0,mradermacher,,UNKNOWN
+llama_therapy,8b-therapy-model,3.0,llama-3-8b-therapy-model,3.0,Mental Health,True,8.0,llama,Q8_0,mradermacher,meta-llama-3-8b-instruct,IT
+llama_therapy,8b-therapyllama,3.0,therapyllama-8b-v1,3.0,Mental Health,True,8.0,llama,Q8_0,victunes,meta-llama-3-8b-instruct,IT
+llama_therapy,8b-wellminded,3.1,wellminded_therapy_engine,3.1,Mental Health,True,8.0,llama,Q4_0,PixelPanda1,meta-llama-3.1-8b,PT
+llama_therapy,8b-mental-therapy-cat,3.0,llama-3-mental-therapy-cat-8b,3.0,Mental Health,True,8.0,llama,Q8_0,mradermacher,meta-llama-3-8b-instruct,IT
+qwen1.5,0.5b-it,1.5,qwen1.5-0.5b-chat,1.5,IT,True,0.5,qwen2,Q8_0,Qwen,,PT
+qwen1.5,1.8b-it,1.5,qwen1.5-1.8b-chat,1.5,IT,True,1.8,qwen2,Q8_0,Qwen,,PT
+qwen1.5,4b-it,1.5,qwen1.5-4b-chat,1.5,IT,True,4.0,qwen2,Q8_0,Qwen,,PT
+qwen1.5,7b-it,1.5,qwen1.5-7b-chat,1.5,IT,True,7.0,qwen2,Q8_0,Qwen,,PT
+qwen2,0.5b-it,2.0,qwen2-0.5b-instruct,2.0,IT,True,0.5,qwen2,Q8_0,Qwen,,PT
+qwen2,1.5b-pt,2.0,qwen2-1.5b,2.0,PT,True,1.5,qwen2,Q8_0,QuantFactory,,
+qwen2,1.5b-it,2.0,qwen2-1.5b-instruct,2.0,IT,True,1.5,qwen2,Q8_0,Qwen,qwen2-1.5b,PT
+qwen2,7b-pt,2.0,qwen2-7b,2.0,PT,True,7.0,qwen2,Q8_0,QuantFactory,,
+qwen2,7b-it,2.0,qwen2-7b-instruct,2.0,IT,True,7.0,qwen2,Q8_0,Qwen,qwen2-7b,PT
+qwen_guard,0.6b,3.0,qwen3guard-gen-0.6b,3.0,Guard,True,0.6,qwen3,Q8_0,QuantFactory,qwen3-0.6b,IT
+qwen_guard,4b,3.0,qwen3guard-gen-4b,3.0,Guard,True,4.0,qwen3,Q8_0,mradermacher,qwen/qwen3-4b,IT
+qwen_guard,8b,3.0,qwen3guard-gen-8b,3.0,Guard,True,8.0,qwen3,Q8_0,ShahzebKhoso,qwen/qwen3-8b,IT
+qwen_medical,7b-4bit,1.5,4-bit_medical_qwen1.5-7b-chat,1.5,Medical,False,7.0,qwen2,Q8_0,mradermacher,qwen1.5-7b-chat,IT
+qwen_medical,7b-8bit,1.5,8-bit_medical_qwen1.5-7b-chat,1.5,Medical,True,7.0,qwen2,Q8_0,mradermacher,qwen1.5-7b-chat,IT
+qwen_medical,7b-umls,2.0,qwen-umls-7b-instruct,2.0,Medical,True,7.6,qwen2,Q8_0,prithivMLmods,qwen2-7b-instruct,IT
+qwen_medical,7b-med-qwen2,2.0,med-qwen2,2.0,Medical,True,7.0,qwen2,Q8_0,Echelon-AI,qwen2-7b,PT
+qwen_medical,32b-reasoning,3.0,qwen-3-32b-medical-reasoning,3.0,Medical,True,32.0,qwen3,Q8_0,mradermacher,qwen/qwen3-32b,IT
+qwen_mental_health,1.8b-depression,1.5,qwen-1.8b_depressiondetection,1.5,Mental Health,True,1.8,qwen,Q8_0,mradermacher,,UNKNOWN
+qwen_mental_health,4b-depression-reddit,1.5,moriacrafter_-_qwen1.5-4b_depressiondetection_reddit,1.5,Mental Health,True,4.0,qwen2,Q8_0,RichardErkhov,,PT
+qwen_mental_health,7b-deepseek-mental,2.0,deepseek-r1-distill-qwen-7b-student-mental-health,2.0,Mental Health,True,7.0,qwen2,Q8_0,mradermacher,,UNKNOWN
+llama4,17b-scout,4.0,llama-4-scout-17b-16e-instruct,4.0,IT,False,17.0,llama4,Q4_K_M,unsloth,,PT
+llama_guard,1b,3.2,meta-llama_-_llama-guard-3-1b,3.2,Guard,True,1.0,llama,Q8_0,RichardErkhov,llama-3.2-1b,PT
+llama_guard,8b,3.1,llama-guard-3-8b,3.1,Guard,True,8.0,llama,Q8_0,Mungert,meta-llama-3.1-8b,PT
+llama_mental_health,3b-kenko,3.2,kenko-mental-health-llama-3-model,3.2,Mental Health,True,3.0,llama,Q8_0,mradermacher,llama-3.2-3b-instruct,IT
+llama_mental_health,8b-companion,3.1,mental_health_companion,3.1,Mental Health,True,8.0,llama,Q4_K_M,usham,meta-llama-3.1-8b,PT
+llama_mental_health,1b-companion,3.2,mental-health-companion-model,3.2,Mental Health,True,1.0,llama,Q8_0,usham,llama-3.2-1b-instruct,IT
+llama_medical,70b-med42,3.0,m42-health_-_llama3-med42-70b,3.0,Medical,True,70.0,llama,Q4_K_M,RichardErkhov,lmstudio-community/meta-llama-3.1-70b-instruct,IT
+llama1,7b,1.0,llama-7b,1.0,PT,True,7.0,llama,Q8_0,TheBloke,,
+llama1,13b,1.0,llama-13b,1.0,PT,True,13.0,llama,Q8_0,TheBloke,,
+llama1,30b,1.0,llama-30b,1.0,PT,True,33.0,llama,Q8_0,TheBloke,,
+llama2,70b-pt,2.0,llama-2-70b,2.0,PT,True,70.0,llama,Q5_K_M,TheBloke,,
+llama3,70b-pt,3.0,nousresearch/meta-llama-3-70b,3.0,PT,True,70.0,llama,Q4_K_M,NousResearch,,
+llama_medical,7b-meditron,2.0,epfl-llm-meditron-7b.gguf,2.0,Medical,True,7.0,llama,Q4_K_M,bsampath,llama-2-7b,PT
+llama_medical,7b-medllama,2.0,medllama-2-7b,2.0,Medical,True,7.0,llama,Q5_K_M,garcianacho,,UNKNOWN
+llama_medical,8b-med42,3.0,m42-health_-_llama3-med42-8b,3.0,Medical,True,8.0,llama,Q8_0,RichardErkhov,meta-llama-3.1-8b,PT
+llama_medical,13b-medalpaca,1.0,medalpaca-13b,1.0,Medical,True,13.0,llama,Q8_0,TheBloke,,UNKNOWN
+llama_medical,70b-meditron,2.0,meditron-70b,2.0,Medical,True,70.0,llama,Q4_K_M,TheBloke,llama-2-70b,PT
+llama_mental_health,3b-chatbot-v2,3.2,llama3.2-3b-mental-health-chatbot,3.2,Mental Health,True,3.0,llama,Q8_0,sujal011,llama-3.2-3b-instruct,IT
+llama_therapy,8b-psycare,3.1,psycare1.0-llama3.1-8b,3.1,Mental Health,True,8.0,llama,Q8_0,mradermacher,meta-llama-3.1-8b-instruct,IT
+llama_therapy,8b-psychocounsel,3.0,psychocounsel-llama3-8b,3.0,Mental Health,True,8.0,llama,Q8_0,mradermacher,meta-llama-3.1-8b-instruct,IT
+llama_mental_health,3b-youth-classification,3.2,llama-3.2-3b-instruct-youth-mental-health-classification,3.2,Mental Health,True,3.0,llama,Q8_0,mradermacher,llama-3.2-3b-instruct,IT
+qwen_mental_health,14b-psycollm,2.0,psycollm,2.0,Mental Health,True,14.0,qwen2,Q8_0,mradermacher,,IT
+qwen_mental_health,14b-xinyuan,3.0,xinyuan-llm-14b-0428,3.0,Mental Health,True,14.0,qwen3,Q8_0,mradermacher,,PT
+qwen_mental_health,33b-compumacy,3.0,compumacy-experimental_mf,3.0,Mental Health,True,32.0,qwen3,Q8_0,mradermacher,qwen/qwen3-32b,IT
+qwen_medical,1.5b-deepseek-cot,1.5,deepseek-r1-medical-cot-qwen-1.5,1.5,Medical,True,1.5,qwen2,Q8_0,mradermacher,,PT
+llama3.1,70b-it-bartowski,3.1,bartowski/meta-llama-3.1-70b-instruct,3.1,IT,False,70.0,llama,Q6_K_L,bartowski,,PT
+llama3,70b-pt-litellms,3.0,litellms/meta-llama-3-70b,3.0,PT,False,70.0,llama,,LiteLLMs,,
+llama_guard,1b-duplicate,3.2,llama-guard-3-1b,3.2,Guard,False,1.5,llama,Q8_0,QuantFactory,llama-3.2-1b,PT
+gemma3n,4b-pt-google,3.0,google/gemma-3n-e4b,3.0,PT,True,6.9,gemma3n,Q8_0,google,,
+gpt_oss,120b,1.0,openai/gpt-oss-120b,1.0,IT,False,120.0,gpt-oss,MXFP4,openai,,PT
+gpt_oss,20b,1.0,openai/gpt-oss-20b,1.0,IT,False,20.0,gpt-oss,MXFP4,openai,,PT
+qwen_multimodal,32b-qoq-vl,2.0,qoq-med-vl-32b,2.0,Medical,False,32.0,qwen2vl,Q8_0,mradermacher,lmstudio-community/Qwen2.5-VL-32B-Instruct-GGUF,IT
+qwen_multimodal,7b-qoq-vl,2.0,qoq-med-vl-7b,2.0,Medical,False,7.0,qwen2vl,Q8_0,mradermacher,lmstudio-community/Qwen2.5-VL-7B-Instruct-GGUF,IT
+gemma3n,4b-base,3.0,gemma-3n-e4b,3.0,PT,False,6.9,gemma3n,Q8_0,mradermacher,,
+llama3.2,1b-it-bartowski,3.2,bartowski/llama-3.2-1b-instruct,3.2,IT,True,1.0,llama,Q8_0,bartowski,llama-3.2-1b,PT

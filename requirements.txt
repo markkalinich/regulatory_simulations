@@ -1,0 +1,27 @@
+# Safety Simulations - LLM Model Evaluation Framework
+# Dependencies for running experiments, analysis, and visualization
+
+# HTTP clients for API communication
+aiohttp==3.10.11
+requests==2.32.3
+
+# Data processing and analysis
+numpy==1.26.4
+pandas==2.2.3
+
+# Machine learning and metrics
+scikit-learn==1.5.2
+
+# Visualization and plotting
+matplotlib==3.9.2
+seaborn==0.13.2
+
+# Configuration management
+pyyaml==6.0.2
+
+# Built-in Python modules (no installation required):
+# json, os, sys, pathlib, argparse, time, logging, asyncio, typing
+# dataclasses, abc, shutil, glob, datetime, warnings
+
+# Built-in modules (no pip install needed):
+# sqlite3, json, pathlib, argparse

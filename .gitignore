@@ -1,0 +1,60 @@
+
+*~
+analysis.log
+*.bin
+# Cache database files
+cache/*.db
+cache_mac/*.db
+# Config files
+configs/
+.coverage
+.DS_Store
+*.egg-info/
+env/
+.idea/
+# IDE/Editor
+.ipynb_checkpoints/
+# Jupyter notebook checkpoints
+# Keep example results for documentation (create these manually if needed)
+# Large model files and outputs (if any)
+lms_models.json
+*.log
+*.model
+# OS
+*.pyc
+__pycache__/
+*.pyd
+*.pyo
+.pytest_cache/
+# Python
+.Python
+results/*
+results/comprehensive_analysis_*/
+results/*.csv
+# Results Directory - Selective Exclusion
+!results/example_summary.csv
+results/experiments/
+results/*.json
+results/*.jsonl
+results/legacy/
+results/model_comparisons/
+results/*.png
+!results/README.md
+results/visualizations/
+*.safetensors
+*.swo
+*.swp
+*.temp
+# Temporary and log files
+Thumbs.db
+*.tmp
+.venv/
+venv/
+# Virtual Environment
+.vscode/
+config/models_config.csv.backup
+cache_v2/*.db
+
+# Downloaded folders from betsy
+cache_v2_from_betsy/
+results_from_betsy/
