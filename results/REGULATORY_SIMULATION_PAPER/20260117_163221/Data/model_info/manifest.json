@@ -1,0 +1,30 @@
+{
+  "paper_models": {
+    "gemma": [
+      "270m-it",
+      "1b-it",
+      "4b-it",
+      "12b-it",
+      "27b-it"
+    ],
+    "qwen": [
+      "0.6b",
+      "1.7b",
+      "4b",
+      "8b",
+      "14b",
+      "32b"
+    ],
+    "llama3.2": [
+      "1b-it-bartowski"
+    ],
+    "llama3.1": [
+      "8b-it"
+    ],
+    "llama3.3": [
+      "70b"
+    ]
+  },
+  "models_config_file": "/Users/markkalinich/regulatory_simulations/config/regulatory_paper_models.csv",
+  "generated": "2026-01-17T16:34:39.357520"
+}

@@ -1,0 +1,46 @@
+{
+  "figure_name": "therapy_request_confusion_matrix",
+  "generated_at": "2026-01-17T16:34:12.141495",
+  "date": "20260117",
+  "time": "16:34:12",
+  "input_datasets": [],
+  "analysis_parameters": {
+    "input_experiment_dir": "/Users/markkalinich/regulatory_simulations/results/individual_prediction_performance/therapy_request/20260117_163241_TR_paper/model_outputs",
+    "input_description": "Model outputs for therapy_request task",
+    "task_type": "therapy_request",
+    "experiment_dir": "/Users/markkalinich/regulatory_simulations/results/individual_prediction_performance/therapy_request/20260117_163241_TR_paper",
+    "binary_classification_name": "Therapy Request",
+    "model_families": {
+      "gemma": [
+        "270m-it",
+        "1b-it",
+        "4b-it",
+        "12b-it",
+        "27b-it"
+      ],
+      "llama": [
+        "1b-it-bartowski",
+        "8b-it",
+        "70b"
+      ],
+      "qwen": [
+        "0.6b",
+        "1.7b",
+        "4b",
+        "8b",
+        "14b",
+        "32b"
+      ]
+    },
+    "total_predictions": 10920
+  },
+  "output_files": [
+    {
+      "file_path": "/Users/markkalinich/regulatory_simulations/results/REGULATORY_SIMULATION_PAPER/20260117_163221/Supplementary_Figures/figures_S4-S6/therapy_request_binary_confusion_matrix_grid.png",
+      "file_type": "figure",
+      "relative_path": "therapy_request_binary_confusion_matrix_grid.png",
+      "dpi": 300
+    }
+  ],
+  "reproducibility_command": null
+}
