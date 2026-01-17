@@ -144,10 +144,10 @@ results/REGULATORY_SIMULATION_PAPER/[YYYYMMDD_HHMMSS]/
 │       ├── p1_p2_p_harm_risk_analysis_m_2.0.png
 │       └── ...
 ├── Supplementary_Figures/
-│   ├── figure_S3/                      # Sankey diagrams
-│   ├── figures_S4-S6/                  # Confusion matrices
-│   ├── figures_S7-S9/                  # Accuracy heatmaps
-│   └── figure_S10/                     # P2 across M values
+│   ├── figure_S4/                      # Sankey diagrams
+│   ├── figures_S5-S7/                  # Confusion matrices
+│   ├── figures_S8-S10/                 # Accuracy heatmaps
+│   └── figure_S11/                     # P2 across M values
 ├── Data/
 │   ├── raw_data/                       # Original input datasets
 │   ├── processed_data/                 # Comprehensive metrics CSVs

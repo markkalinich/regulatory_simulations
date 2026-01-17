@@ -11,10 +11,10 @@ Main Figures:
     Figure 5: P1/P2/P_harm risk analysis (failure_multiplier m values from config)
 
 Supplementary Figures:
-    Figure S3: Sankey diagrams (SI, therapy request, therapy engagement)
-    Figures S4-S6: Binary confusion matrices (SI, Therapy Request, Therapy Engagement)
-    Figures S7-S9: Per-statement accuracy heatmaps (SI, Therapy Request, Therapy Engagement)
-    Figure S10: P2 by Harm Prevalence Across Failure Multiplier Values
+    Figure S4: Sankey diagrams (SI, therapy request, therapy engagement)
+    Figures S5-S7: Binary confusion matrices (SI, Therapy Request, Therapy Engagement)
+    Figures S8-S10: Per-statement accuracy heatmaps (SI, Therapy Request, Therapy Engagement)
+    Figure S11: P2 by Harm Prevalence Across Failure Multiplier Values
 
 Data Outputs:
     - raw_data/: Original finalized datasets and raw model results
@@ -33,20 +33,20 @@ Output Structure:
                 p1_p2_p_harm_risk_analysis_m_2.0.png
                 ...
         Supplementary_Figures/
-            figure_S3/
+            figure_S4/
                 si_expert_review_sankey.png
                 therapy_request_expert_review_sankey.png
                 therapy_engagement_expert_review_sankey.png
-            figures_S4-S6/
+            figures_S5-S7/
                 suicidal_ideation_binary_confusion_matrix_grid.png
                 therapy_request_binary_confusion_matrix_grid.png
                 therapy_engagement_binary_confusion_matrix_grid.png
-            figures_S7-S9/
+            figures_S8-S10/
                 si_correctness_heatmap.png
                 therapy_request_correctness_heatmap.png
                 therapy_engagement_correctness_heatmap.png
-            figure_S10/
-                figure_s10_p2_across_m_values.png
+            figure_S11/
+                figure_s11_p2_across_m_values.png
         Data/
             raw_data/
             processed_data/
@@ -572,12 +572,12 @@ def generate_figure_5(
     return all_success
 
 
-def generate_figure_s3(logger: logging.Logger, dry_run: bool = False) -> bool:
-    """Generate Figure S3: Sankey Diagrams."""
-    log_subsection(logger, "Figure S3: Sankey Diagrams")
+def generate_figure_s4(logger: logging.Logger, dry_run: bool = False) -> bool:
+    """Generate Figure S4: Sankey Diagrams."""
+    log_subsection(logger, "Figure S4: Sankey Diagrams")
     
     script = ROOT / "analysis" / "data_validation" / "sankey_diagram_configs.py"
-    output_dir = SUPP_FIGURES_DIR / "figure_S3"
+    output_dir = SUPP_FIGURES_DIR / "figure_S4"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     experiments = ['si', 'therapy_request', 'therapy_engagement']
@@ -609,7 +609,7 @@ def generate_figure_s3(logger: logging.Logger, dry_run: bool = False) -> bool:
                             if f.is_file() and f.name.endswith('.png'):
                                 dst_file = output_dir / f.name
                                 shutil.copy(f, dst_file)
-                                logger.info(f"    ✓ Saved: figure_S3/{f.name}")
+                                logger.info(f"    ✓ Saved: figure_S4/{f.name}")
         else:
             all_success = False
     
@@ -621,13 +621,13 @@ def generate_confusion_matrices(
     logger: logging.Logger,
     dry_run: bool = False
 ) -> bool:
-    """Generate Figures S4-S6: Binary Confusion Matrices (consolidated into one folder)."""
-    log_subsection(logger, "Figures S4-S6: Confusion Matrices")
+    """Generate Figures S5-S7: Binary Confusion Matrices (consolidated into one folder)."""
+    log_subsection(logger, "Figures S5-S7: Confusion Matrices")
     
     script = ROOT / "analysis" / "model_performance" / "generate_confusion_matrix_figures.py"
     
     # Consolidated output directory for all confusion matrices
-    output_dir = SUPP_FIGURES_DIR / "figures_S4-S6"
+    output_dir = SUPP_FIGURES_DIR / "figures_S5-S7"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     task_display_map = {
@@ -662,7 +662,7 @@ def generate_confusion_matrices(
             all_success = False
     
     if all_success and not dry_run:
-        logger.info(f"  ✓ All confusion matrices saved to: figures_S4-S6/")
+        logger.info(f"  ✓ All confusion matrices saved to: figures_S5-S7/")
     
     return all_success
 
@@ -672,15 +672,15 @@ def generate_heatmaps(
     logger: logging.Logger,
     dry_run: bool = False
 ) -> bool:
-    """Generate Figures S7-S9: Per-statement Accuracy Heatmaps (consolidated into one folder)."""
-    log_subsection(logger, "Figures S7-S9: Accuracy Heatmaps")
+    """Generate Figures S8-S10: Per-statement Accuracy Heatmaps (consolidated into one folder)."""
+    log_subsection(logger, "Figures S8-S10: Accuracy Heatmaps")
     
     # First generate the correctness matrices
     matrix_script = ROOT / "analysis" / "model_performance" / "generate_model_statement_matrices.py"
     heatmap_script = ROOT / "analysis" / "data_validation" / "generate_all_heatmaps.py"
     
     # Consolidated output directory
-    output_dir = SUPP_FIGURES_DIR / "figures_S7-S9"
+    output_dir = SUPP_FIGURES_DIR / "figures_S8-S10"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Map task names to filename prefixes (for finding heatmap output files)
@@ -716,7 +716,7 @@ def generate_heatmaps(
         return False
     
     # Step 3: Copy outputs to consolidated supplementary figure directory
-    logger.info("  Step 3: Copying outputs to figures_S7-S9/...")
+    logger.info("  Step 3: Copying outputs to figures_S8-S10/...")
     
     # Heatmaps are saved to results/model_performance_analysis/{date}/{timestamp_heatmapname}/
     # Each heatmap gets its own timestamped directory
@@ -767,25 +767,25 @@ def generate_heatmaps(
             all_success = False
     
     if all_success:
-        logger.info(f"  ✓ All heatmaps saved to: figures_S7-S9/")
+        logger.info(f"  ✓ All heatmaps saved to: figures_S8-S10/")
     
     return all_success
 
 
-def generate_figure_s10(
+def generate_figure_s11(
     filtered_csvs: Dict[str, Path],
     logger: logging.Logger,
     dry_run: bool = False
 ) -> bool:
-    """Generate Figure S10: P2 by Harm Prevalence Across Failure Multiplier Values.
+    """Generate Figure S11: P2 by Harm Prevalence Across Failure Multiplier Values.
     
     Shows how P2 varies with harm prevalence at different failure multiplier (M) values.
     Uses the same underlying data as Figure 5 but shows all M values in a single facet plot.
     """
-    log_subsection(logger, "Figure S10: P2 Across M Values")
+    log_subsection(logger, "Figure S11: P2 Across M Values")
     
-    script = ROOT / "analysis" / "comparative_analysis" / "figure_s10_p2_by_model_size_across_m.py"
-    output_dir = SUPP_FIGURES_DIR / "figure_S10"
+    script = ROOT / "analysis" / "comparative_analysis" / "figure_s11_p2_by_model_size_across_m.py"
+    output_dir = SUPP_FIGURES_DIR / "figure_S11"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     args = [
@@ -798,7 +798,7 @@ def generate_figure_s10(
     success = run_python_script(script, args, logger, dry_run=dry_run)
     
     if success and not dry_run:
-        logger.info(f"  ✓ Saved: figure_S10/figure_s10_p2_across_m_values.png")
+        logger.info(f"  ✓ Saved: figure_S11/figure_s11_p2_across_m_values.png")
     
     return success
 
@@ -1169,7 +1169,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
     # Generate supplementary figures
     log_section(logger, "GENERATING SUPPLEMENTARY FIGURES")
     
-    if not generate_figure_s3(logger, args.dry_run):
+    if not generate_figure_s4(logger, args.dry_run):
         success = False
     
     if not generate_confusion_matrices(experiment_dirs, logger, args.dry_run):
@@ -1178,7 +1178,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
     if not generate_heatmaps(experiment_dirs, logger, args.dry_run):
         success = False
     
-    if not generate_figure_s10(filtered_csvs, logger, args.dry_run):
+    if not generate_figure_s11(filtered_csvs, logger, args.dry_run):
         success = False
     
     # Collect data (unless figures-only)

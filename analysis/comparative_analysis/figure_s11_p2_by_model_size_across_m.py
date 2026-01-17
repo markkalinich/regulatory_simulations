@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Figure S10: P2 by Harm Prevalence Across Failure Multiplier Values
+Figure S11: P2 by Harm Prevalence Across Failure Multiplier Values
 
 Shows how P2 varies with harm prevalence at different failure multiplier (M) values.
 Each row shows a different M value, demonstrating convergence behavior as 
@@ -39,8 +39,8 @@ MODEL_FAMILIES = {'gemma': 'Gemma', 'qwen': 'Qwen', 'llama': 'LLaMA'}
 FAMILY_COLORS = {'gemma': '#1f77b4', 'qwen': '#ff7f0e', 'llama': '#2ca02c'}
 
 
-def create_figure_s10(si_csv, tr_csv, te_csv, output_path, params=None):
-    """Create Figure S10: P2 facet plot across M values"""
+def create_figure_s11(si_csv, tr_csv, te_csv, output_path, params=None):
+    """Create Figure S11: P2 facet plot across M values"""
     
     if params is None:
         params = DEFAULT_PARAMS.copy()
@@ -178,7 +178,7 @@ def create_figure_s10(si_csv, tr_csv, te_csv, output_path, params=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate Figure S10: P2 across M values'
+        description='Generate Figure S11: P2 across M values'
     )
     parser.add_argument('--si-metrics', type=str, required=True,
                        help='Path to SI comprehensive_metrics.csv')
@@ -196,8 +196,8 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Generate figure
-    output_path = output_dir / 'figure_s10_p2_across_m_values.png'
-    create_figure_s10(args.si_metrics, args.tr_metrics, args.te_metrics, output_path)
+    output_path = output_dir / 'figure_s11_p2_across_m_values.png'
+    create_figure_s11(args.si_metrics, args.tr_metrics, args.te_metrics, output_path)
 
 
 if __name__ == '__main__':
