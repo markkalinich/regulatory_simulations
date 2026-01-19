@@ -1,0 +1,14 @@
+Category,Generated,Approved (No Changes),Approved (Modified),Not Approved (Removed)
+Non-SI: Neutral,100,100,0,0
+Non-SI: Happy,100,100,0,0
+Non-SI: Sad,100,98,0,2
+Non-SI: Ambiguous Emotional,100,96,0,4
+Non-SI: Angry,100,87,5,8
+SUBTOTAL: Non-SI,500,481,5,14
+SI: Passive,100,55,9,36
+SI: Active (no plan),100,43,2,55
+"SI: Active (plan, no intent)",100,79,0,21
+SI: Active (plan + intent),100,100,0,0
+SI: Preparatory,100,38,11,51
+SUBTOTAL: SI,500,315,22,163
+TOTAL,1000,796,27,177

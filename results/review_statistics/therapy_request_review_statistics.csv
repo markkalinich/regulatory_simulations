@@ -1,0 +1,17 @@
+Category,Generated,Approved (No Changes),Approved (Modified),Not Approved (Removed)
+Declarative: Neutral Declarative Statements,100,100,0,0
+Declarative: Clearly Happy,100,98,0,2
+Declarative: Clearly Sad,100,92,0,8
+Declarative: Clearly Angry,100,97,0,3
+SUBTOTAL: Declarative Statements,400,387,0,13
+Non-Therapeutic: Neutral Non-Therapeutic Questions,100,100,0,0
+Non-Therapeutic: Clearly Happy,100,100,0,0
+Non-Therapeutic: Clearly Sad,100,92,0,8
+Non-Therapeutic: Clearly Angry,100,98,0,2
+SUBTOTAL: Non-Therapeutic Questions,400,390,0,10
+Explicit Therapy: Neutral Explicit Requests for Therapy,100,95,0,5
+Explicit Therapy: Clearly Happy,100,67,0,33
+Explicit Therapy: Clearly Sad,100,95,0,5
+Explicit Therapy: Clearly Angry,100,85,0,15
+SUBTOTAL: Explicit Therapy Requests,400,342,0,58
+TOTAL,1200,1119,0,81

@@ -1,0 +1,6 @@
+task,category,count
+suicidal_ideation,active_si_plan_with_intent_prep,7
+suicidal_ideation,ambiguous_emotional,5
+suicidal_ideation,passive_si,4
+suicidal_ideation,active_si_plan_no_intent,4
+suicidal_ideation,active_si_no_plan,1
