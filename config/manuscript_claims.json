@@ -1,0 +1,172 @@
+{
+  "_metadata": {
+    "description": "Centralized registry of all numerical claims in the regulatory simulation paper",
+    "last_updated": "2026-01-19",
+    "manuscript_version": "v2_revision",
+    "notes": "All claims verified against GGUF/Monte Carlo pipeline output"
+  },
+  
+  "section_1_gemini_data": {
+    "description": "Gemini-generated synthetic data (Figure 3)",
+    "claims": {
+      "non_si_retained": {
+        "value": "481/500",
+        "numerator": 481,
+        "denominator": 500,
+        "context": "Non-suicidal statements retained"
+      },
+      "si_retained": {
+        "value": "315/500",
+        "numerator": 315,
+        "denominator": 500,
+        "p_value_threshold": 0.001,
+        "context": "SI content retention, significantly lower"
+      },
+      "non_therapeutic_tr_retained": {
+        "value": "777/800",
+        "numerator": 777,
+        "denominator": 800,
+        "context": "Non-therapeutic statements retained (therapy request task)"
+      },
+      "explicit_therapy_requests_retained": {
+        "value": "342/400",
+        "numerator": 342,
+        "denominator": 400,
+        "p_value_threshold": 0.001,
+        "context": "Explicit therapy requests retained"
+      },
+      "te_non_therapeutic_ambiguous": {
+        "qualifier": "nearly all",
+        "threshold_pct": 90,
+        "context": "Non-therapeutic and ambiguous conversations retained"
+      },
+      "te_therapeutic_without_modification": {
+        "qualifier": "fewer than half",
+        "threshold_pct": 50,
+        "context": "Therapeutic exchanges met criteria without modification"
+      },
+      "te_p_value": {
+        "threshold": 0.001,
+        "context": "TE therapeutic vs non-therapeutic comparison"
+      },
+      "cbt_dbt_accuracy": {
+        "qualifier": "largely accurate",
+        "threshold_pct": 90,
+        "context": "CBT/DBT-based dialogues accuracy"
+      },
+      "psychodynamic_diagnosis_medication": {
+        "qualifier": "frequently broke frame",
+        "threshold_pct": 50,
+        "context": "Psychodynamic/diagnosis/medication required revision"
+      }
+    }
+  },
+  
+  "section_2_cross_model_performance": {
+    "description": "Difficult statements missed by >50% of models",
+    "claims": {
+      "si_difficult_statements": {
+        "count": 21,
+        "percentage": 4.7,
+        "total_models": 14,
+        "breakdown": {
+          "active_si_plan_with_intent_prep": 7,
+          "active_si_plan_no_intent": 4,
+          "passive_si": 4,
+          "active_si_no_plan": 1,
+          "ambiguous_emotional": 5
+        },
+        "figure": "S8",
+        "context": "SI detection statements missed by >50% of models"
+      },
+      "tr_difficult_statements": {
+        "count": 4,
+        "percentage": 0.5,
+        "breakdown": {
+          "declarative_sad": 3,
+          "non_therapeutic_question_sad": 1
+        },
+        "figure": "S9",
+        "context": "Therapy request statements missed by >50% of models"
+      },
+      "te_difficult_conversations": {
+        "count": 5,
+        "percentage": 1.2,
+        "breakdown": {
+          "clear_engagement": 3,
+          "ambiguous_engagement": 2
+        },
+        "figure": "S10",
+        "context": "Therapy engagement conversations missed by >50% of models"
+      }
+    }
+  },
+  
+  "section_3_p1_p2_estimates": {
+    "description": "P1 and P2 risk estimates (Figure 5, S11)",
+    "claims": {
+      "p1_range": {
+        "min": 1.1e-8,
+        "max": 1.5e-4,
+        "baseline_pct": 1.0,
+        "orders_of_magnitude": 4,
+        "per_million_min": 0.01,
+        "per_million_max": 153,
+        "context": "P1 range at 1% baseline SI prevalence"
+      },
+      "gemma_p1_orders": {
+        "value": 3.4,
+        "context": "Gemma family P1 variability (orders of magnitude)"
+      },
+      "baseline_prevalence_contribution": {
+        "value": 2,
+        "range_min_pct": 0.1,
+        "range_max_pct": 10,
+        "context": "Baseline prevalence contribution to P1 variability (orders)"
+      },
+      "p2_range": {
+        "min": 4.9e-5,
+        "max": 4.5e-3,
+        "baseline_pct": 1.0,
+        "orders_of_magnitude": 2,
+        "per_million_min": 49,
+        "per_million_max": 4506,
+        "context": "P2 range at 1% baseline P(lack care → harm)"
+      },
+      "p2_independence": {
+        "min": 4.9e-5,
+        "max": 4.5e-3,
+        "m_value": 1,
+        "orders_of_magnitude": 2.0,
+        "context": "P2 range under independence (m=1)"
+      },
+      "p2_strong_dependence_convergence": {
+        "value": 1.0e-2,
+        "m_value": 100000,
+        "context": "P2 convergence under strong dependence"
+      }
+    }
+  },
+  
+  "abstract": {
+    "description": "Claims appearing in abstract",
+    "claims": {
+      "num_models": 14,
+      "model_families": ["Qwen", "Gemma", "LLaMA"],
+      "p1_range_min": 1.1e-8,
+      "p1_range_max": 1.5e-4,
+      "p2_range_min": 4.9e-5,
+      "p2_range_max": 4.5e-3,
+      "max_orders_of_magnitude": 4
+    }
+  },
+  
+  "_removed_claims": {
+    "description": "Claims removed in v2 revision",
+    "qwen_8b_vs_4b_nonmonotonic": {
+      "original_claim": "Qwen 8B P1=1.04×10⁻⁵ nearly 15x worse than 4B P1=7.14×10⁻⁷",
+      "reason": "Artifact of MLX format issues, not reproduced with GGUF",
+      "removed_in": "v2_revision"
+    }
+  }
+}

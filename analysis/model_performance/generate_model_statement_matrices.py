@@ -362,6 +362,45 @@ def main():
         # Statements correct by all models
         statements_correct_by_all = (matrix_df.sum(axis=0) == matrix_df.shape[0]).sum()
         print(f"Statements correct by ALL models: {statements_correct_by_all}")
+        
+        # Calculate and save statements missed by >50% of models
+        miss_rate = 1 - matrix_df.mean(axis=0)
+        difficult_mask = miss_rate > 0.5
+        difficult_count = difficult_mask.sum()
+        difficult_pct = difficult_count / matrix_df.shape[1] * 100
+        
+        print(f"\nStatements missed by >50% of models: {difficult_count} ({difficult_pct:.1f}%)")
+        
+        # Get category breakdown for difficult statements
+        difficult_ids = [int(x) for x in miss_rate[difficult_mask].index]
+        difficult_info = info_df[info_df['statement_index'].isin(difficult_ids)]
+        category_breakdown = difficult_info['ground_truth'].value_counts().to_dict()
+        
+        print(f"  Category breakdown: {category_breakdown}")
+        
+        # Save difficult statements summary to CSV
+        summary_data = {
+            'task': [exp['name']],
+            'total_statements': [matrix_df.shape[1]],
+            'total_models': [matrix_df.shape[0]],
+            'difficult_count': [difficult_count],
+            'difficult_pct': [difficult_pct],
+            'category_breakdown': [str(category_breakdown)]
+        }
+        summary_df = pd.DataFrame(summary_data)
+        
+        # Also save detailed breakdown
+        breakdown_rows = [{'task': exp['name'], 'category': cat, 'count': count} 
+                         for cat, count in category_breakdown.items()]
+        breakdown_df = pd.DataFrame(breakdown_rows) if breakdown_rows else pd.DataFrame(columns=['task', 'category', 'count'])
+        
+        summary_file = output_dir / f"{exp['name']}_difficult_statements_summary.csv"
+        breakdown_file = output_dir / f"{exp['name']}_difficult_statements_breakdown.csv"
+        
+        summary_df.to_csv(summary_file, index=False)
+        breakdown_df.to_csv(breakdown_file, index=False)
+        print(f"Saved difficult statements summary to: {summary_file}")
+        print(f"Saved difficult statements breakdown to: {breakdown_file}")
 
 
 if __name__ == '__main__':

@@ -580,6 +580,14 @@ def create_p1_p2_risk_plot(suicide_csv, therapy_request_csv, therapy_engagement_
     # Add normalized family column for filtering
     plot_data['normalized_family'] = plot_data['model_family'].apply(normalize_family)
     
+    # Save computed P1/P2/P_harm values to CSV for reproducibility and verification
+    csv_filename = f"p1_p2_p_harm_values_m_{failure_multiplier}.csv"
+    csv_output_path = tracker.get_output_path(csv_filename)
+    plot_data.to_csv(csv_output_path, index=False)
+    tracker.add_output_file(csv_output_path, file_type="data", 
+                           description="Computed P1, P2, P_harm values for all models and baseline percentages")
+    print(f"  Saved computed values: {csv_filename}")
+    
     # Create 3×3 subplot grid: 3 rows (P1, P2, P_harm) × 3 columns (model families)
     fig, axes = plt.subplots(3, 3, figsize=figsize, sharey='row')
     family_colors = {'gemma': '#1f77b4', 'qwen': '#ff7f0e', 'llama': '#2ca02c'}
