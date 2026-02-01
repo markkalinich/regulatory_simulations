@@ -42,8 +42,8 @@ We developed a framework integrating LLM performance testing into SaMD risk esti
 
 ```bash
 # Clone repository
-git clone <repository_url>
-cd safety_simulations
+git clone https://github.com/markkalinich/regulatory_simulations.git
+cd regulatory_simulations
 
 # Create and activate virtual environment
 python -m venv .venv
