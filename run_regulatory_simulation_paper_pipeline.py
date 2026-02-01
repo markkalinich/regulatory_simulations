@@ -323,10 +323,10 @@ def regenerate_experiment_from_cache(
     success = run_python_script(script, args, logger, dry_run=dry_run)
     
     if success and output_dir.exists():
-        logger.info(f"    ✓ Generated: {output_dir.name}")
+        logger.info(f"    ✅ Generated: {output_dir.name}")
         return output_dir
     else:
-        logger.error(f"    ✗ Failed to regenerate {task_name}")
+        logger.error(f"    ❌ Failed to regenerate {task_name}")
         return None
 
 
@@ -390,7 +390,7 @@ def run_python_script(
         )
         
         if result.returncode != 0:
-            logger.error(f"  ✗ Script failed: {script_path.name}")
+            logger.error(f"  ❌ Script failed: {script_path.name}")
             logger.debug(f"  STDERR: {result.stderr[-1000:] if result.stderr else 'None'}")
             return False
         
@@ -402,10 +402,10 @@ def run_python_script(
         return True
         
     except subprocess.TimeoutExpired:
-        logger.error(f"  ✗ Script timed out: {script_path.name}")
+        logger.error(f"  ❌ Script timed out: {script_path.name}")
         return False
     except Exception as e:
-        logger.error(f"  ✗ Script failed with exception: {e}")
+        logger.error(f"  ❌ Script failed with exception: {e}")
         return False
 
 
@@ -439,10 +439,10 @@ def generate_figure_3(logger: logging.Logger, dry_run: bool = False) -> bool:
                         dst_file = FIGURES_DIR / "figure_3.png"
                         dst_file.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy(src_file, dst_file)
-                        logger.info(f"  ✓ Saved: Figures/figure_3.png")
+                        logger.info(f"  ✅ Saved: Figures/figure_3.png")
                         return True
         
-        logger.warning(f"  ⚠ Output not found after script completion")
+        logger.warning(f"  ⚠️ Output not found after script completion")
         return False
     
     return False
@@ -493,10 +493,10 @@ def generate_figure_4(
                         dst_file = FIGURES_DIR / "figure_4.png"
                         dst_file.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy(src_file, dst_file)
-                        logger.info(f"  ✓ Saved: Figures/figure_4.png")
+                        logger.info(f"  ✅ Saved: Figures/figure_4.png")
                         return True
         
-        logger.warning(f"  ⚠ Output not found after script completion")
+        logger.warning(f"  ⚠️ Output not found after script completion")
         return False
     
     return False
@@ -551,14 +551,14 @@ def generate_figure_5(
                     src_png = src_output_dir / 'figure_5.png'
                     if src_png.exists():
                         shutil.copy(src_png, FIGURES_DIR / src_png.name)
-                        logger.info(f"    ✓ Saved: Figures/{src_png.name}")
+                        logger.info(f"    ✅ Saved: Figures/{src_png.name}")
                     
                     # Copy CSV to Data/processed_data/correlated_failure_analysis/
                     for csv_file in src_output_dir.glob('p1_p2*.csv'):
                         corr_dir = DATA_OUTPUT_DIR / "processed_data" / "correlated_failure_analysis"
                         corr_dir.mkdir(parents=True, exist_ok=True)
                         shutil.copy(csv_file, corr_dir / csv_file.name)
-                        logger.info(f"    ✓ Saved: Data/processed_data/correlated_failure_analysis/{csv_file.name}")
+                        logger.info(f"    ✅ Saved: Data/processed_data/correlated_failure_analysis/{csv_file.name}")
     
     return success
 
@@ -601,7 +601,7 @@ def generate_figure_s4(logger: logging.Logger, dry_run: bool = False) -> bool:
                             if f.is_file() and f.name.endswith('.png'):
                                 dst_file = output_dir / f.name
                                 shutil.copy(f, dst_file)
-                                logger.info(f"    ✓ Saved: figure_S4/{f.name}")
+                                logger.info(f"    ✅ Saved: figure_S4/{f.name}")
         else:
             all_success = False
     
@@ -655,9 +655,9 @@ def generate_confusion_matrices(
             new_name = output_dir / figure_name
             if old_name.exists():
                 old_name.rename(new_name)
-                logger.info(f"    ✓ Saved: {figure_name}")
+                logger.info(f"    ✅ Saved: {figure_name}")
             else:
-                logger.warning(f"    ⚠ Output not found: {old_name.name}")
+                logger.warning(f"    ⚠️ Output not found: {old_name.name}")
         else:
             all_success = False
     
@@ -667,7 +667,7 @@ def generate_confusion_matrices(
             shutil.rmtree(subdir)
     
     if all_success and not dry_run:
-        logger.info(f"  ✓ All confusion matrices saved to: figures_S5-S7/")
+        logger.info(f"  ✅ All confusion matrices saved to: figures_S5-S7/")
     
     return all_success
 
@@ -709,7 +709,7 @@ def generate_heatmaps(
     
     matrix_success = run_python_script(matrix_script, matrix_args, logger, dry_run=dry_run)
     if not matrix_success:
-        logger.warning("  ⚠ Matrix generation may have failed")
+        logger.warning("  ⚠️ Matrix generation may have failed")
         return False
     
     # Step 2: Generate heatmaps (one call - it reads from results/review_statistics/)
@@ -717,7 +717,7 @@ def generate_heatmaps(
     
     heatmap_success = run_python_script(heatmap_script, [], logger, dry_run=dry_run)
     if not heatmap_success:
-        logger.warning("  ⚠ Heatmap generation may have failed")
+        logger.warning("  ⚠️ Heatmap generation may have failed")
         return False
     
     # Step 3: Copy outputs to consolidated supplementary figure directory
@@ -728,13 +728,13 @@ def generate_heatmaps(
     src_base = RESULTS_DIR / "model_performance_analysis"
     
     if not src_base.exists():
-        logger.error(f"  ✗ Heatmap output directory not found: {src_base}")
+        logger.error(f"  ❌ Heatmap output directory not found: {src_base}")
         return False
     
     # Find the most recent date directory
     date_dirs = sorted([d for d in src_base.iterdir() if d.is_dir()], key=lambda x: x.name, reverse=True)
     if not date_dirs:
-        logger.error(f"  ✗ No date directories in {src_base}")
+        logger.error(f"  ❌ No date directories in {src_base}")
         return False
     
     date_dir = date_dirs[0]
@@ -758,7 +758,7 @@ def generate_heatmaps(
         )
         
         if not heatmap_dirs:
-            logger.warning(f"    ⚠ No directory found for: {filename_prefix}")
+            logger.warning(f"    ⚠️ No directory found for: {filename_prefix}")
             all_success = False
             continue
         
@@ -771,16 +771,16 @@ def generate_heatmaps(
             if f.is_file() and f.name.endswith('.png'):
                 dst_file = output_dir / figure_name
                 shutil.copy(f, dst_file)
-                logger.info(f"    ✓ Saved: {figure_name}")
+                logger.info(f"    ✅ Saved: {figure_name}")
                 found = True
                 break
         
         if not found:
-            logger.warning(f"    ⚠ No PNG found in: {heatmap_src_dir}")
+            logger.warning(f"    ⚠️ No PNG found in: {heatmap_src_dir}")
             all_success = False
     
     if all_success:
-        logger.info(f"  ✓ All heatmaps saved to: figures_S8-S10/")
+        logger.info(f"  ✅ All heatmaps saved to: figures_S8-S10/")
     
     return all_success
 
@@ -816,9 +816,9 @@ def generate_figure_s11(
         new_name = output_dir / "figure_S11.png"
         if old_name.exists():
             old_name.rename(new_name)
-            logger.info(f"  ✓ Saved: figure_S11/figure_S11.png")
+            logger.info(f"  ✅ Saved: figure_S11/figure_S11.png")
         else:
-            logger.warning(f"  ⚠ Output not found: {old_name.name}")
+            logger.warning(f"  ⚠️ Output not found: {old_name.name}")
         
         # Move CSV outputs to Data/processed_data/correlated_failure_analysis/
         corr_dir = DATA_OUTPUT_DIR / "processed_data" / "correlated_failure_analysis"
@@ -827,7 +827,7 @@ def generate_figure_s11(
         for csv_file in list(output_dir.glob("p1_p2_p_harm_values_m_*.csv")):
             dst_file = corr_dir / csv_file.name
             shutil.move(str(csv_file), str(dst_file))  # Move instead of copy
-            logger.info(f"  ✓ Saved: Data/processed_data/correlated_failure_analysis/{csv_file.name}")
+            logger.info(f"  ✅ Saved: Data/processed_data/correlated_failure_analysis/{csv_file.name}")
         
         # Clean up any timestamp subfolders created by the script
         for subdir in output_dir.iterdir():
@@ -871,9 +871,9 @@ def collect_raw_data(
         src = src_dir / filename
         if src.exists():
             shutil.copy(src, statements_dir / filename)
-            logger.info(f"  ✓ Copied: model_inputs/statements/{filename}")
+            logger.info(f"  ✅ Copied: model_inputs/statements/{filename}")
         else:
-            logger.warning(f"  ⚠ Not found: {filename}")
+            logger.warning(f"  ⚠️ Not found: {filename}")
     
     # Copy model output CSVs (actual model predictions)
     model_outputs_dir = raw_data_dir / "model_outputs"
@@ -889,9 +889,9 @@ def collect_raw_data(
             for csv_file in outputs_src.glob("*.csv"):
                 shutil.copy(csv_file, task_outputs_dir / csv_file.name)
                 csv_count += 1
-            logger.info(f"  ✓ Copied: {task_name} model outputs ({csv_count} files)")
+            logger.info(f"  ✅ Copied: {task_name} model outputs ({csv_count} files)")
         else:
-            logger.warning(f"  ⚠ Not found: {task_name} model_outputs/")
+            logger.warning(f"  ⚠️ Not found: {task_name} model_outputs/")
     
     return True
 
@@ -931,9 +931,9 @@ def collect_processed_data(
         src = src_dir / filename
         if src.exists():
             shutil.copy(src, psychiatrist_dir / filename)
-            logger.info(f"  ✓ Copied: psychiatrist_statement_review/{filename}")
+            logger.info(f"  ✅ Copied: psychiatrist_statement_review/{filename}")
         else:
-            logger.warning(f"  ⚠ Not found: {filename}")
+            logger.warning(f"  ⚠️ Not found: {filename}")
     
     # Copy comprehensive_metrics.csv to model_performance_metrics/ (skip if already filtered)
     for task_name, exp_dir in experiment_dirs.items():
@@ -942,15 +942,15 @@ def collect_processed_data(
         
         # Skip if already exists (from filtering step)
         if dst_path.exists():
-            logger.info(f"  ✓ Already exists: model_performance_metrics/{dst_name} (filtered)")
+            logger.info(f"  ✅ Already exists: model_performance_metrics/{dst_name} (filtered)")
             continue
             
         metrics_file = exp_dir / "tables" / "comprehensive_metrics.csv"
         if metrics_file.exists():
             shutil.copy(metrics_file, dst_path)
-            logger.info(f"  ✓ Copied: model_performance_metrics/{dst_name}")
+            logger.info(f"  ✅ Copied: model_performance_metrics/{dst_name}")
         else:
-            logger.warning(f"  ⚠ Not found: {task_name} comprehensive_metrics.csv")
+            logger.warning(f"  ⚠️ Not found: {task_name} comprehensive_metrics.csv")
     
     # Copy difficult statements breakdown to difficult_statement_analysis/
     # (Summary files removed - breakdown contains all needed info including metadata)
@@ -965,9 +965,9 @@ def collect_processed_data(
         src = review_stats_dir / filename
         if src.exists():
             shutil.copy(src, difficult_dir / filename)
-            logger.info(f"  ✓ Copied: difficult_statement_analysis/{filename}")
+            logger.info(f"  ✅ Copied: difficult_statement_analysis/{filename}")
         else:
-            logger.warning(f"  ⚠ Not found: {filename}")
+            logger.warning(f"  ⚠️ Not found: {filename}")
     
     return True
 
@@ -997,16 +997,16 @@ def collect_prompts(logger: logging.Logger, dry_run: bool = False) -> bool:
         src = src_dir / filename
         if src.exists():
             shutil.copy(src, prompts_dir / filename)
-            logger.info(f"  ✓ Copied: model_inputs/prompts/{filename}")
+            logger.info(f"  ✅ Copied: model_inputs/prompts/{filename}")
         else:
-            logger.warning(f"  ⚠ Not found: {filename}")
+            logger.warning(f"  ⚠️ Not found: {filename}")
     
     # Copy Gemini prompts
     gemini_src_dir = src_dir / "gemini_prompts"
     gemini_dst_dir = prompts_dir / "gemini_prompts"
     if gemini_src_dir.exists():
         shutil.copytree(gemini_src_dir, gemini_dst_dir)
-        logger.info(f"  ✓ Copied: model_inputs/prompts/gemini_prompts/")
+        logger.info(f"  ✅ Copied: model_inputs/prompts/gemini_prompts/")
     
     return True
 
@@ -1033,7 +1033,7 @@ def generate_table_s7(logger: logging.Logger, dry_run: bool = False) -> bool:
     success = run_python_script(script, args, logger, dry_run=dry_run)
     
     if success:
-        logger.info(f"  ✓ Saved: raw_data/model_inputs/table_s7_parameters.csv")
+        logger.info(f"  ✅ Saved: raw_data/model_inputs/table_s7_parameters.csv")
     
     return success
 
@@ -1059,7 +1059,7 @@ def collect_model_info(
     
     # Read from the models config that was passed in (regulatory_paper_models.csv)
     if not models_config_path.exists():
-        logger.warning(f"  ⚠ Config not found: {models_config_path}")
+        logger.warning(f"  ⚠️ Config not found: {models_config_path}")
         return False
     
     df = pd.read_csv(models_config_path)
@@ -1076,7 +1076,7 @@ def collect_model_info(
         paper_df = pd.DataFrame(paper_model_rows)
         output_path = model_info_dir / "paper_models_config.csv"
         paper_df.to_csv(output_path, index=False)
-        logger.info(f"  ✓ Created: raw_data/model_info/paper_models_config.csv ({len(paper_df)} models)")
+        logger.info(f"  ✅ Created: raw_data/model_info/paper_models_config.csv ({len(paper_df)} models)")
     
     # Create a manifest
     manifest = {
@@ -1087,7 +1087,7 @@ def collect_model_info(
     manifest_path = model_info_dir / "manifest.json"
     with open(manifest_path, 'w') as f:
         json.dump(manifest, f, indent=2)
-    logger.info(f"  ✓ Created: raw_data/model_info/manifest.json")
+    logger.info(f"  ✅ Created: raw_data/model_info/manifest.json")
     
     return True
 
@@ -1099,7 +1099,7 @@ def extract_provenance_from_pngs(logger: logging.Logger, dry_run: bool = False) 
     try:
         from PIL import Image
     except ImportError:
-        logger.error("  ✗ PIL/Pillow not available - cannot extract provenance")
+        logger.error("  ❌ PIL/Pillow not available - cannot extract provenance")
         return False
     
     # Provenance goes under Logs/figure_provenance/
@@ -1135,7 +1135,7 @@ def extract_provenance_from_pngs(logger: logging.Logger, dry_run: bool = False) 
     
     for png_path, figure_name in png_files:
         if not png_path.exists():
-            logger.warning(f"  ⚠ PNG not found: {png_path.name}")
+            logger.warning(f"  ⚠️ PNG not found: {png_path.name}")
             missing_count += 1
             continue
         
@@ -1150,13 +1150,13 @@ def extract_provenance_from_pngs(logger: logging.Logger, dry_run: bool = False) 
                 prov_data = json.loads(prov_json)
                 with open(json_path, 'w') as f:
                     json.dump(prov_data, f, indent=2)
-                logger.info(f"  ✓ Extracted: {figure_name}_provenance.json")
+                logger.info(f"  ✅ Extracted: {figure_name}_provenance.json")
                 extracted_count += 1
             else:
-                logger.warning(f"  ⚠ No provenance in: {png_path.name}")
+                logger.warning(f"  ⚠️ No provenance in: {png_path.name}")
                 no_provenance_count += 1
         except Exception as e:
-            logger.error(f"  ✗ Error extracting from {png_path.name}: {e}")
+            logger.error(f"  ❌ Error extracting from {png_path.name}: {e}")
             no_provenance_count += 1
     
     logger.info(f"")
@@ -1266,7 +1266,7 @@ The pipeline uses cached LLM responses from `regulatory_paper_cache_v3/results.d
     with open(readme_path, 'w') as f:
         f.write(readme_content)
     
-    logger.info(f"  ✓ Created: README.md")
+    logger.info(f"  ✅ Created: README.md")
     return True
 
 
@@ -1330,7 +1330,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
             experiment_dirs['suicidal_ideation'] = exp_dir
             needs_filtering['suicidal_ideation'] = False  # Fresh generation only has paper models
         else:
-            logger.error(f"  ✗ Failed to generate suicidal_ideation")
+            logger.error(f"  ❌ Failed to generate suicidal_ideation")
             return 1
     
     # Therapy Request
@@ -1344,7 +1344,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
             experiment_dirs['therapy_request'] = exp_dir
             needs_filtering['therapy_request'] = False
         else:
-            logger.error(f"  ✗ Failed to generate therapy_request")
+            logger.error(f"  ❌ Failed to generate therapy_request")
             return 1
     
     # Therapy Engagement
@@ -1358,13 +1358,13 @@ def run_pipeline(args: argparse.Namespace) -> int:
             experiment_dirs['therapy_engagement'] = exp_dir
             needs_filtering['therapy_engagement'] = False
         else:
-            logger.error(f"  ✗ Failed to generate therapy_engagement")
+            logger.error(f"  ❌ Failed to generate therapy_engagement")
             return 1
     
     # Verify all directories exist (for overrides)
     for task_name, exp_dir in experiment_dirs.items():
         if not args.dry_run and not exp_dir.exists():
-            logger.error(f"  ✗ Directory not found: {exp_dir}")
+            logger.error(f"  ❌ Directory not found: {exp_dir}")
             return 1
     
     # Verify all models used Q8_0 quantization
@@ -1386,13 +1386,13 @@ def run_pipeline(args: argparse.Namespace) -> int:
             non_q8_models = [(model, quant) for model, quant in quants if quant != 'Q8_0']
             
             if non_q8_models:
-                logger.error(f"  ✗ Found {len(non_q8_models)} models with non-Q8_0 quantization:")
+                logger.error(f"  ❌ Found {len(non_q8_models)} models with non-Q8_0 quantization:")
                 for model, quant in non_q8_models:
                     logger.error(f"    {model}: {quant}")
                 logger.error(f"  All models must be Q8_0 for paper consistency")
                 return 1
             else:
-                logger.info(f"  ✓ All {len(quants)} models verified as Q8_0")
+                logger.info(f"  ✅ All {len(quants)} models verified as Q8_0")
         else:
             logger.warning(f"  ⚠ Cache database not found: {cache_db}")
             logger.warning(f"    Cannot verify quantizations - proceeding anyway")
@@ -1480,7 +1480,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
     # Extract provenance from PNGs to verify embedding and create JSON files
     log_section(logger, "EXTRACTING FIGURE PROVENANCE FROM PNGS")
     if not extract_provenance_from_pngs(logger, args.dry_run):
-        logger.warning("  ⚠ Some figures missing embedded provenance (non-critical)")
+        logger.warning("  ⚠️ Some figures missing embedded provenance (non-critical)")
         # Don't fail pipeline for missing provenance
     
     # Generate review statistics (required for manuscript claims verification)
@@ -1494,7 +1494,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
         review_stats_success = run_python_script(review_stats_script, [], logger, dry_run=args.dry_run)
         
         if review_stats_success:
-            logger.info(f"  ✓ Review statistics generated")
+            logger.info(f"  ✅ Review statistics generated")
             
             # Generate chi-squared tests (depends on review statistics)
             logger.info("  Generating chi-squared tests...")
@@ -1502,11 +1502,11 @@ def run_pipeline(args: argparse.Namespace) -> int:
             chi_sq_success = run_python_script(chi_sq_script, [], logger, dry_run=args.dry_run)
             
             if chi_sq_success:
-                logger.info(f"  ✓ Chi-squared tests generated")
+                logger.info(f"  ✅ Chi-squared tests generated")
             else:
-                logger.warning(f"  ⚠ Chi-squared tests generation failed")
+                logger.warning(f"  ⚠️ Chi-squared tests generation failed")
         else:
-            logger.warning(f"  ⚠ Review statistics generation failed")
+            logger.warning(f"  ⚠️ Review statistics generation failed")
     else:
         logger.info(f"  [DRY RUN] Would generate review statistics and chi-squared tests")
     
@@ -1526,9 +1526,9 @@ def run_pipeline(args: argparse.Namespace) -> int:
         verification_success = run_python_script(verification_script, verification_args, logger, dry_run=args.dry_run)
         
         if verification_success:
-            logger.info(f"  ✓ Verification report: {verification_output}")
+            logger.info(f"  ✅ Verification report: {verification_output}")
         else:
-            logger.warning(f"  ⚠ Verification report generation failed (non-critical)")
+            logger.warning(f"  ⚠️ Verification report generation failed (non-critical)")
     else:
         logger.info(f"  [DRY RUN] Would generate verification report")
     
@@ -1554,11 +1554,11 @@ def run_pipeline(args: argparse.Namespace) -> int:
                 (audit_df['wrong_params'] > 0)
             ])
             
-            logger.info(f"  ✓ Cache audit complete: {total_models} models audited")
+            logger.info(f"  ✅ Cache audit complete: {total_models} models audited")
             if models_with_issues > 0:
-                logger.info(f"    ⚠ {models_with_issues} models have parse failures or parameter issues")
+                logger.info(f"    ⚠️ {models_with_issues} models have parse failures or parameter issues")
         except Exception as e:
-            logger.warning(f"  ⚠ Cache audit failed (non-critical): {e}")
+            logger.warning(f"  ⚠️ Cache audit failed (non-critical): {e}")
         
         # Confusion Matrix Audit (Figures 4, S5-S7)
         logger.info("  Running confusion matrix audit (Figures 4, S5-S7)...")
@@ -1570,9 +1570,9 @@ def run_pipeline(args: argparse.Namespace) -> int:
         ]
         cm_audit_success = run_python_script(cm_audit_script, cm_audit_args, logger, dry_run=args.dry_run)
         if cm_audit_success:
-            logger.info(f"  ✓ Confusion matrix audit passed")
+            logger.info(f"  ✅ Confusion matrix audit passed")
         else:
-            logger.warning(f"  ⚠ Confusion matrix audit FAILED - review report")
+            logger.warning(f"  ⚠️ Confusion matrix audit FAILED - review report")
         
         # Heatmap Audit (Figures S8-S10)
         logger.info("  Running heatmap audit (Figures S8-S10)...")
@@ -1583,9 +1583,9 @@ def run_pipeline(args: argparse.Namespace) -> int:
         ]
         hm_audit_success = run_python_script(hm_audit_script, hm_audit_args, logger, dry_run=args.dry_run)
         if hm_audit_success:
-            logger.info(f"  ✓ Heatmap audit passed")
+            logger.info(f"  ✅ Heatmap audit passed")
         else:
-            logger.warning(f"  ⚠ Heatmap audit FAILED - review report")
+            logger.warning(f"  ⚠️ Heatmap audit FAILED - review report")
         
         # Figure S11 Audit (P2 across failure multiplier values)
         logger.info("  Running Figure S11 audit (P2 across M values)...")
@@ -1596,11 +1596,11 @@ def run_pipeline(args: argparse.Namespace) -> int:
         ]
         s11_audit_success = run_python_script(s11_audit_script, s11_audit_args, logger, dry_run=args.dry_run)
         if s11_audit_success:
-            logger.info(f"  ✓ Figure S11 audit passed")
+            logger.info(f"  ✅ Figure S11 audit passed")
         else:
-            logger.warning(f"  ⚠ Figure S11 audit FAILED - review report")
+            logger.warning(f"  ⚠️ Figure S11 audit FAILED - review report")
         
-        logger.info(f"  ✓ Audit reports saved to: {audits_dir}")
+        logger.info(f"  ✅ Audit reports saved to: {audits_dir}")
     else:
         logger.info(f"  [SKIPPED] Audits (dry-run or figures-only mode)")
     

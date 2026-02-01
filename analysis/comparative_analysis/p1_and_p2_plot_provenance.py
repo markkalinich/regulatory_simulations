@@ -69,7 +69,7 @@ DEFAULT_PARAMS = {
     # Monte Carlo error propagation settings
     'n_mc_samples': RISK_MODEL_PARAMS['n_mc_samples'],
     'prior_alpha': RISK_MODEL_PARAMS['prior_alpha'],
-    'random_state': None,            # For reproducibility (None = non-deterministic)
+    'random_state': 42,              # Fixed seed for reproducibility
     'uncertainty_style': 'both',     # Plotting decision - kept local
     'sample_params': RISK_MODEL_PARAMS['mc_sample_empirical_rates'],  # Legacy name for backward compat
 }
