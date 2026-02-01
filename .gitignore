@@ -63,3 +63,4 @@ cache_v2/*.db
 # Downloaded folders from betsy
 cache_v2_from_betsy/
 results_from_betsy/
+/pipeline_output*.log
