@@ -1,5 +1,7 @@
 # Regulatory Simulation Paper - Reproducibility Package
 
+![Regulatory Simulation Experimental Overview](docs/Regulatory%20Simulation%20Experimental%20Overview.svg)
+
 This repository contains code and data to reproduce all figures and analyses from:
 
 > **Leveraging simulation to provide a practical framework for assessing the novel scope of risk of LLMs in healthcare**  
@@ -232,7 +234,7 @@ The failure multiplier models conditional dependence between detection failures:
 
 ## Re-running Experiments
 
-The main pipeline script reads from cached model predictions by default. To regenerate predictions:
+The main pipeline script reads from cached model predictions:
 
 ### Prerequisites
 - LM Studio running at `http://localhost:1234`
