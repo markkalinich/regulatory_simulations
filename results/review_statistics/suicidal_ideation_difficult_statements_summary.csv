@@ -1,2 +1,0 @@
-task,total_statements,total_models,difficult_count,difficult_pct,category_breakdown
-suicidal_ideation,450,14,21,4.666666666666667,"{'active_si_plan_with_intent_prep': 7, 'ambiguous_emotional': 5, 'passive_si': 4, 'active_si_plan_no_intent': 4, 'active_si_no_plan': 1}"

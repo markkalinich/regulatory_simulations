@@ -20,6 +20,7 @@ import time
 import json
 import logging
 import asyncio
+import pandas as pd
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from dataclasses import asdict
@@ -38,6 +39,44 @@ from orchestration.experiment_manager import ExperimentManager, ExperimentConfig
 from cache.result_cache import ResultCache, CachedResult
 from cache.result_cache_v2 import ResultCacheV2
 from utilities.model_validator import ModelValidator, validate_experiment_model
+
+# Global cache for models config
+_models_config_cache = None
+
+def get_expected_quantization(model_family: str, model_size: str) -> Optional[str]:
+    """Load expected quantization from models_config.csv for the given model.
+    
+    Args:
+        model_family: Model family (e.g., 'llama3.3')
+        model_size: Model size (e.g., '70b-q8')
+        
+    Returns:
+        Expected quantization (e.g., 'Q8_0') or None if not found
+    """
+    global _models_config_cache
+    
+    if _models_config_cache is None:
+        config_path = Path(__file__).parent.parent / 'config' / 'models_config.csv'
+        if not config_path.exists():
+            logging.warning(f"models_config.csv not found at {config_path}")
+            return None
+        _models_config_cache = pd.read_csv(config_path)
+    
+    # Match by family and size
+    mask = (_models_config_cache['family'] == model_family) & \
+           (_models_config_cache['size'] == model_size)
+    
+    matches = _models_config_cache[mask]
+    
+    if len(matches) == 0:
+        logging.warning(f"No config found for {model_family}:{model_size}")
+        return None
+    
+    if len(matches) > 1:
+        logging.warning(f"Multiple configs found for {model_family}:{model_size}, using first")
+    
+    quant = matches.iloc[0]['quantization']
+    return quant if pd.notna(quant) else None
 
 
 def infer_experiment_type(prompt_name: str) -> str:
@@ -492,6 +531,8 @@ def run_experiment(config: ExperimentConfig,
     # For V2 cache: load base prompt separately and track suffix
     base_prompt_content = None
     prompt_suffix = None
+    expected_quantization = None  # Initialize for later use
+    
     if model_key is not None:
         from config.constants import MODEL_SPECIFIC_PROMPT_SUFFIXES
         with open(config.prompt.file_path, 'r') as f:
@@ -507,6 +548,15 @@ def run_experiment(config: ExperimentConfig,
                     if model_family.startswith(prefix):
                         prompt_suffix = suffix
                         break
+        
+        # Get expected quantization for validation
+        if config.model:
+            expected_quantization = get_expected_quantization(
+                config.model.family.lower(),
+                config.model.size.lower()
+            )
+            if expected_quantization:
+                logging.info(f"Expected quantization for {config.model.family}:{config.model.size} = {expected_quantization}")
     
     # Validate prompt categories match config expectations
     # This prevents expensive experiment failures due to taxonomy mismatches (DESIGN-11)
@@ -593,7 +643,8 @@ def run_experiment(config: ExperimentConfig,
                 max_tokens=config.max_tokens,
                 top_p=config.top_p,
                 prompt_name=config.prompt.name,
-                prompt_suffix=prompt_suffix
+                prompt_suffix=prompt_suffix,
+                expected_quantization=expected_quantization
             )
             
             if not cache_key:

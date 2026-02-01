@@ -62,9 +62,8 @@ def create_binary_confusion_matrix(results_df: pd.DataFrame,
     # Only use 2 true labels (no parse failures in ground truth)
     true_labels = [negative_label, positive_label]
     pred_labels = [negative_label, positive_label, 'Parse Fail']
-    cm = confusion_matrix(y_true, y_pred, labels=None)  # Get all combinations that exist
     
-    # Reconstruct as 2x3 matrix (2 true labels x 3 predicted labels)
+    # Build 2x3 matrix (2 true labels x 3 predicted labels)
     cm_2x3 = np.zeros((2, 3), dtype=int)
     for i, true_label in enumerate(true_labels):
         for j, pred_label in enumerate(pred_labels):

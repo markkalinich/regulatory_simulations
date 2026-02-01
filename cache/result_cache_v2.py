@@ -10,10 +10,14 @@ Key changes from v1:
 4. Tracks execution context (hostname, etc.) without affecting cache key
 
 Cache key is based on:
-- model_path (from LM Studio - includes quantization)
+- model_path (from LM Studio)
+- quantization_name (e.g., Q8_0, Q4_K_M) - prevents collision for multi-quant folders
 - prompt_hash (content BEFORE model-specific modifications)
 - input_hash
 - temperature, max_tokens, top_p, context_length
+
+Note: Adding quantization_name to the cache key (Jan 2026) means existing cache entries
+will NOT match new cache lookups. New results will be stored with new cache IDs.
 """
 
 import hashlib
@@ -66,18 +70,20 @@ class CacheKeyV2:
     max_tokens: int
     top_p: float
     context_length: Optional[int] = None
+    quantization_name: Optional[str] = None  # Quantization (e.g., Q8_0, Q4_K_M)
     
     def get_cache_id(self) -> str:
         """Generate unique cache ID.
         
-        Uses model_path as primary identifier since it includes:
+        Uses model_path + quantization as primary identifier to handle:
         - Publisher
         - Model name
-        - Quantization level
+        - Quantization level (explicit, handles multi-quant folders)
         - Specific file
         """
         key_components = [
             self.model_path,
+            self.quantization_name or "unknown",  # Include quantization in cache key
             self.prompt_hash,
             self.input_hash,
             str(self.temperature),
@@ -110,28 +116,38 @@ class CachedResultV2:
 class ResultCacheV2:
     """Cache V2 with path-based model identification."""
     
-    def __init__(self, cache_dir: str = "cache_v2_test"):
-        """Initialize the cache."""
-        self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(exist_ok=True)
-        self.db_path = self.cache_dir / "results.db"
-        self._init_database()
+    def __init__(self, cache_dir: str = "cache_v2_test", read_only: bool = False):
+        """Initialize the cache.
         
-        # Cache LM Studio model data
-        self._lms_models = get_lm_studio_models()
+        Args:
+            cache_dir: Directory containing the cache database
+            read_only: If True, do not write anything to the database (for analysis)
+        """
+        self.cache_dir = Path(cache_dir)
+        self.db_path = self.cache_dir / "results.db"
+        self._read_only = read_only
+        
+        if not read_only:
+            self.cache_dir.mkdir(exist_ok=True)
+            self._init_database()
+        
+        # Cache LM Studio model data - skip if read_only (not needed for analysis)
+        self._lms_models = {} if read_only else get_lm_studio_models()
         
         # Cache for prompt hashes
         self._prompt_hash_cache = {}
         
-        # Execution context
+        # Execution context - skip write if read_only
         self._context = get_execution_context()
-        self._context_id = self._get_or_create_context_id()
+        self._context_id = self._get_or_create_context_id() if not read_only else None
         
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
         
-        self.logger.debug(f"CacheV2 initialized at {self.db_path}")
-        self.logger.debug(f"Found {len(self._lms_models)} models in LM Studio")
+        mode_str = "READ-ONLY" if read_only else "READ-WRITE"
+        self.logger.debug(f"CacheV2 initialized at {self.db_path} ({mode_str})")
+        if not read_only:
+            self.logger.debug(f"Found {len(self._lms_models)} models in LM Studio")
     
     def _init_database(self):
         """Initialize SQLite database with V2 schema."""
@@ -253,59 +269,100 @@ class ResultCacheV2:
         
         return context_id
     
-    def _ensure_model_registered(self, model_key: str) -> Optional[str]:
-        """Ensure model is registered in model_files table. Returns model_path."""
-        # Check database first (enables offline access to existing cache)
+    def _ensure_model_registered(self, model_key: str, expected_quantization: Optional[str] = None, read_only: bool = False) -> Tuple[Optional[str], Optional[str]]:
+        """Ensure model is registered in model_files table. Returns (model_path, quantization_name).
+        
+        IMPORTANT: Always checks LM Studio first to get current quantization (critical for
+        multi-quant folders where same model_key can have different quantizations loaded).
+        Only falls back to database when LM Studio is unavailable.
+        
+        Args:
+            model_key: LM Studio model key
+            expected_quantization: Expected quantization (e.g., 'Q8_0'). If provided,
+                will validate that LM Studio has the correct quantization loaded.
+            read_only: If True, only read from database, do not modify (for analysis/retrieval)
+        
+        Raises:
+            ValueError: If expected_quantization is provided and doesn't match actual
+        """
+        # For read-only operations, skip LM Studio and use database directly
+        # This prevents overwriting cached metadata with whatever is currently loaded
+        if read_only:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.execute(
+                    "SELECT model_path, quantization_name FROM model_files WHERE model_key = ?", (model_key,)
+                )
+                row = cursor.fetchone()
+                if row:
+                    self.logger.debug(f"Model {model_key} found in database (read-only mode)")
+                    return row[0], row[1]
+            self.logger.warning(f"Model {model_key} not found in database (read-only mode)")
+            return None, None
+        
+        # Use cached LM Studio models (loaded once at initialization)
+        if model_key in self._lms_models:
+            # LM Studio is available - use current model info (includes current quantization)
+            model_info = self._lms_models[model_key]
+            model_path = model_info['path']
+            now = datetime.now().isoformat()
+            
+            quant = model_info.get('quantization', {})
+            quant_name = quant.get('name') if isinstance(quant, dict) else None
+            quant_bits = quant.get('bits') if isinstance(quant, dict) else None
+            
+            # VALIDATE QUANTIZATION MISMATCH
+            if expected_quantization and quant_name and expected_quantization != quant_name:
+                raise ValueError(
+                    f"❌ QUANTIZATION MISMATCH for {model_key}!\n"
+                    f"   Expected: {expected_quantization}\n"
+                    f"   Actually loaded in LM Studio: {quant_name}\n"
+                    f"   Model path: {model_path}\n\n"
+                    f"   Please load the correct quantization in LM Studio before running.\n"
+                    f"   This check prevents accidentally caching results from the wrong quantization."
+                )
+            
+            self.logger.debug(f"Model {model_key} from LM Studio: path={model_path}, quant={quant_name}")
+            if expected_quantization:
+                self.logger.info(f"✓ Quantization verified: {quant_name} matches expected {expected_quantization}")
+            
+            with sqlite3.connect(self.db_path) as conn:
+                # Use REPLACE to update metadata if model is re-run with different quantization
+                conn.execute("""
+                    INSERT OR REPLACE INTO model_files
+                    (model_path, model_key, display_name, architecture, params_string,
+                     format, quantization_name, quantization_bits, publisher, size_bytes,
+                     max_context_length, first_seen)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    model_path,
+                    model_key,
+                    model_info.get('displayName'),
+                    model_info.get('architecture'),
+                    model_info.get('paramsString'),
+                    model_info.get('format'),
+                    quant_name,
+                    quant_bits,
+                    model_info.get('publisher'),
+                    model_info.get('sizeBytes'),
+                    model_info.get('maxContextLength'),
+                    now
+                ))
+                conn.commit()
+            
+            return model_path, quant_name
+        
+        # LM Studio not available - fall back to database (offline mode)
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
-                "SELECT model_path FROM model_files WHERE model_key = ?", (model_key,)
+                "SELECT model_path, quantization_name FROM model_files WHERE model_key = ?", (model_key,)
             )
             row = cursor.fetchone()
             if row:
                 self.logger.debug(f"Model {model_key} found in database (offline mode)")
-                return row[0]
+                return row[0], row[1]
         
-        # Fall back to LM Studio for new models
-        if model_key not in self._lms_models:
-            # Refresh cache in case model was just loaded
-            self._lms_models = get_lm_studio_models()
-        
-        if model_key not in self._lms_models:
-            self.logger.warning(f"Model {model_key} not found in LM Studio")
-            return None
-        
-        model_info = self._lms_models[model_key]
-        model_path = model_info['path']
-        now = datetime.now().isoformat()
-        
-        quant = model_info.get('quantization', {})
-        quant_name = quant.get('name') if isinstance(quant, dict) else None
-        quant_bits = quant.get('bits') if isinstance(quant, dict) else None
-        
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
-                INSERT OR IGNORE INTO model_files
-                (model_path, model_key, display_name, architecture, params_string,
-                 format, quantization_name, quantization_bits, publisher, size_bytes,
-                 max_context_length, first_seen)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                model_path,
-                model_key,
-                model_info.get('displayName'),
-                model_info.get('architecture'),
-                model_info.get('paramsString'),
-                model_info.get('format'),
-                quant_name,
-                quant_bits,
-                model_info.get('publisher'),
-                model_info.get('sizeBytes'),
-                model_info.get('maxContextLength'),
-                now
-            ))
-            conn.commit()
-        
-        return model_path
+        self.logger.warning(f"Model {model_key} not found in LM Studio or database")
+        return None, None
     
     def _ensure_prompt_registered(self, prompt_content: str, prompt_name: str = None,
                                    source_file: str = None) -> str:
@@ -347,9 +404,18 @@ class ResultCacheV2:
                         temperature: float, max_tokens: int, top_p: float,
                         context_length: Optional[int] = None,
                         prompt_name: str = None,
-                        prompt_suffix: str = None) -> Optional[CacheKeyV2]:
-        """Create a cache key from experiment parameters."""
-        model_path = self._ensure_model_registered(model_key)
+                        prompt_suffix: str = None,
+                        expected_quantization: Optional[str] = None,
+                        read_only: bool = False) -> Optional[CacheKeyV2]:
+        """Create a cache key from experiment parameters.
+        
+        Args:
+            expected_quantization: Expected quantization (e.g., 'Q8_0'). If provided,
+                will validate that LM Studio has the correct quantization loaded.
+                Raises ValueError if mismatch detected.
+            read_only: If True, only read from database, do not modify model_files table.
+        """
+        model_path, quantization_name = self._ensure_model_registered(model_key, expected_quantization, read_only=read_only)
         if not model_path:
             return None
         
@@ -364,7 +430,8 @@ class ResultCacheV2:
             temperature=temperature,
             max_tokens=max_tokens,
             top_p=top_p,
-            context_length=context_length
+            context_length=context_length,
+            quantization_name=quantization_name
         )
     
     def check_cache(self, cache_key: CacheKeyV2, num_replicates: int = 1,
@@ -429,16 +496,16 @@ class ResultCacheV2:
         created_at = datetime.now().isoformat()
         
         with sqlite3.connect(self.db_path) as conn:
-            # Ensure cache key exists
+            # Ensure cache key exists (store quantization for queryability)
             conn.execute("""
                 INSERT OR IGNORE INTO cache_keys
                 (cache_id, model_path, prompt_hash, input_hash, temperature,
-                 max_tokens, top_p, context_length, prompt_suffix_applied, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 max_tokens, top_p, context_length, prompt_suffix_applied, created_at, quantization_name)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 cache_id, cache_key.model_path, cache_key.prompt_hash, cache_key.input_hash,
                 cache_key.temperature, cache_key.max_tokens, cache_key.top_p,
-                cache_key.context_length, prompt_suffix, created_at
+                cache_key.context_length, prompt_suffix, created_at, cache_key.quantization_name
             ))
             
             # Store result
@@ -540,11 +607,12 @@ class ResultCacheV2:
         if not model_info:
             return pd.DataFrame()
         
-        model_path = model_info.get('path', model_key)
+        # Handle both LM Studio (uses 'path') and database (uses 'model_path')
+        model_path = model_info.get('path') or model_info.get('model_path') or model_key
         
         results = []
         for input_text in input_texts:
-            # Create cache key
+            # Create cache key (read_only=True to prevent overwriting metadata during retrieval)
             cache_key = self.create_cache_key(
                 model_key=model_key,
                 prompt_content=prompt_content,
@@ -553,7 +621,9 @@ class ResultCacheV2:
                 max_tokens=max_tokens,
                 top_p=top_p,
                 prompt_name=prompt_name,
-                prompt_suffix=prompt_suffix
+                prompt_suffix=prompt_suffix,
+                expected_quantization=None,  # No validation when retrieving existing results
+                read_only=True  # Don't modify database during analysis
             )
             
             if cache_key:

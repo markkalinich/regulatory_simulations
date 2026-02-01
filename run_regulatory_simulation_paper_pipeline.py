@@ -3,10 +3,10 @@
 Regulatory Simulation Paper Pipeline - Generate All Figures and Data for Publication
 
 This script orchestrates the complete pipeline for generating all figures
-and data needed for the regulatory simulation paper (medrxiv preprint revision).
+and data needed for the regulatory simulation paper revisions to address reviewer feedback..
 
 Main Figures:
-    Figure 3: Expert review breakdown (approved/modified/removed) - 3-panel barplot
+    Figure 3: Psychiatrist review breakdown (approved/modified/removed) - 3-panel barplot
     Figure 4: Model performance metrics (parse rate, sens/spec/accuracy/f1)
     Figure 5: P1/P2/P_harm risk analysis (failure_multiplier m values from config)
 
@@ -14,45 +14,34 @@ Supplementary Figures:
     Figure S4: Sankey diagrams (SI, therapy request, therapy engagement)
     Figures S5-S7: Binary confusion matrices (SI, Therapy Request, Therapy Engagement)
     Figures S8-S10: Per-statement accuracy heatmaps (SI, Therapy Request, Therapy Engagement)
-    Figure S11: P2 by Harm Prevalence Across Failure Multiplier Values
-
-Data Outputs:
-    - raw_data/: Original finalized datasets and raw model results
-    - processed_data/: Psychiatrist review files, comprehensive metrics
-    - model_outputs.tar.gz: Compressed model prediction CSVs
-    - prompts/: Classification prompts and Gemini generation prompts
-    - model_info/: Model configuration CSV
+    Figure S11: P2 vs P(lack of care leading to harm) Across Failure Multiplier Values
 
 Output Structure:
     results/REGULATORY_SIMULATION_PAPER/[YYYYMMDD_HHMMSS]/
+        README.md                        # Explains directory structure
         Figures/
-            figure_3.png
-            figure_4.png
-            figure_5/
-                p1_p2_p_harm_risk_analysis_m_1.0.png
-                p1_p2_p_harm_risk_analysis_m_2.0.png
-                ...
+            figure_3.png                 # Psychiatrist review breakdown
+            figure_4.png                 # Model performance metrics
+            figure_5/                    # P1/P2/P_harm risk analysis
         Supplementary_Figures/
-            figure_S4/
-                si_expert_review_sankey.png
-                therapy_request_expert_review_sankey.png
-                therapy_engagement_expert_review_sankey.png
-            figures_S5-S7/
-                suicidal_ideation_binary_confusion_matrix_grid.png
-                therapy_request_binary_confusion_matrix_grid.png
-                therapy_engagement_binary_confusion_matrix_grid.png
-            figures_S8-S10/
-                si_correctness_heatmap.png
-                therapy_request_correctness_heatmap.png
-                therapy_engagement_correctness_heatmap.png
-            figure_S11/
-                figure_s11_p2_across_m_values.png
+            figure_S4/                   # Sankey diagrams
+            figures_S5-S7/               # Binary confusion matrices
+            figures_S8-S10/              # Per-statement accuracy heatmaps  
+            figure_S11/                  # P2 across failure multiplier values
         Data/
             raw_data/
-            processed_data/
-            model_outputs.tar.gz
-            prompts/
-            model_info/
+                model_info/              # Model configuration (paper_models_config.csv + manifest.json)
+                model_inputs/
+                    prompts/             # Classification prompts + Gemini prompts
+                    statements/          # Finalized input datasets (SI, TR, TE)
+                    table_s7_parameters.csv  # P1/P2 parameter summary
+                model_outputs/           # Model prediction CSVs by task
+            processed_data/              # Psychiatrist review files, comprehensive metrics
+        Logs/
+            pipeline.log
+            manuscript_claims_verification.md
+            figure_provenance/           # Provenance JSON files for all figures
+            Audits/                      # Audit reports (CSV + JSON summaries)
 
 Usage:
     python run_regulatory_simulation_paper_pipeline.py
@@ -69,7 +58,7 @@ Usage:
         --tr-experiment-dir   Override Therapy Request experiment directory
         --te-experiment-dir   Override Therapy Engagement experiment directory
 
-Author: Mark Kalinich
+Author: Mark Kalinich 
 """
 
 import subprocess
@@ -83,6 +72,11 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional, Tuple, List, Dict
 import os
+
+# Add project root to path for imports
+sys.path.insert(0, str(Path(__file__).parent))
+from config.regulatory_paper_parameters import RISK_MODEL_PARAMS
+from utilities.cache_audit import audit_cache
 
 # =============================================================================
 # Configuration
@@ -99,6 +93,7 @@ PAPER_OUTPUT_BASE = RESULTS_DIR / "REGULATORY_SIMULATION_PAPER" / RUN_TIMESTAMP
 FIGURES_DIR = PAPER_OUTPUT_BASE / "Figures"
 SUPP_FIGURES_DIR = PAPER_OUTPUT_BASE / "Supplementary_Figures"
 DATA_OUTPUT_DIR = PAPER_OUTPUT_BASE / "Data"
+LOGS_DIR = PAPER_OUTPUT_BASE / "Logs"
 
 
 def load_models_from_config(config_path: Path) -> dict:
@@ -133,10 +128,6 @@ def load_models_from_config(config_path: Path) -> dict:
             models[family].append(size)
     
     return models
-
-# Failure multiplier values for P1/P2 sensitivity analysis (Figure 5)
-# m=1: independent failures, m>1: FNR approximately m× higher, m→∞: certain failure
-FAILURE_MULTIPLIER_VALUES = [1.0, 2.0, 5.0, 10.0, 20.0, 100.0, 1000.0, 10000.0, 100000.0]
 
 # Task configurations with input data and prompts
 TASKS = {
@@ -222,8 +213,6 @@ def log_subsection(logger: logging.Logger, title: str) -> None:
 # =============================================================================
 # Utility Functions
 # =============================================================================
-
-
 
 def filter_comprehensive_metrics(
     input_csv: Path, 
@@ -425,8 +414,8 @@ def run_python_script(
 # =============================================================================
 
 def generate_figure_3(logger: logging.Logger, dry_run: bool = False) -> bool:
-    """Generate Figure 3: Expert Review Breakdown (3-panel barplot)."""
-    log_subsection(logger, "Figure 3: Expert Review Breakdown")
+    """Generate Figure 3: Psychiatrist Review Breakdown (3-panel barplot)."""
+    log_subsection(logger, "Figure 3: Psychiatrist Review Breakdown")
     
     script = ROOT / "analysis" / "data_validation" / "combined_three_panel_review_provenance.py"
     
@@ -518,63 +507,60 @@ def generate_figure_5(
     logger: logging.Logger, 
     dry_run: bool = False
 ) -> bool:
-    """Generate Figure 5: P1/P2/P_harm Risk Analysis for multiple failure_multiplier values."""
+    """Generate Figure 5: P1/P2/P_harm Risk Analysis for m=1.0 (baseline).
+    
+    Note: Figure S11 shows P2 across all failure multiplier values.
+    """
     log_subsection(logger, "Figure 5: P1/P2/P_harm Risk Analysis")
     
     script = ROOT / "analysis" / "comparative_analysis" / "p1_and_p2_plot_provenance.py"
-    output_dir = FIGURES_DIR / "figure_5"
-    output_dir.mkdir(parents=True, exist_ok=True)
     
     # Get paths to filtered comprehensive_metrics.csv for each task
     si_csv = filtered_csvs['suicidal_ideation']
     tr_csv = filtered_csvs['therapy_request']
     te_csv = filtered_csvs['therapy_engagement']
     
-    all_success = True
+    m = 1.0  # Only generate m=1.0 for Figure 5 (Figure S11 shows all M values)
+    logger.info(f"  Generating m = {m}...")
     
-    for m in FAILURE_MULTIPLIER_VALUES:
-        logger.info(f"  Generating m = {m}...")
-        
-        args = [
-            "--suicide-csv", str(si_csv),
-            "--therapy-request-csv", str(tr_csv),
-            "--therapy-engagement-csv", str(te_csv),
-            "--failure-multiplier", str(m),
-            "--n-mc-samples", "50000",
-            "--uncertainty-style", "both",
-        ]
-        
-        if dry_run:
-            logger.info(f"    [DRY RUN] Would generate m={m}")
-            continue
-        
-        success = run_python_script(script, args, logger, dry_run=dry_run)
-        
-        if success:
-            # Find and copy the output - structure is {date}/{timestamp_name}/file.png
-            src_dir = RESULTS_DIR / "risk_analysis"
-            if src_dir.exists():
-                date_dirs = sorted([d for d in src_dir.iterdir() if d.is_dir()], key=lambda x: x.name, reverse=True)
-                if date_dirs:
-                    timestamp_dirs = sorted([d for d in date_dirs[0].iterdir() if d.is_dir()], key=lambda x: x.name, reverse=True)
-                    if timestamp_dirs:
-                        # Look for the multiplier-specific files (PNG and CSV)
-                        m_str = f"_m_{m}"
-                        for f in timestamp_dirs[0].iterdir():
-                            if f.is_file() and m_str in f.name:
-                                if f.name.endswith('.png'):
-                                    dst_file = output_dir / f.name
-                                    shutil.copy(f, dst_file)
-                                    logger.info(f"    ✓ Saved: figure_5/{f.name}")
-                                elif f.name.endswith('.csv'):
-                                    # Copy CSV to figure_5 folder for verification
-                                    dst_file = output_dir / f.name
-                                    shutil.copy(f, dst_file)
-                                    logger.info(f"    ✓ Saved: figure_5/{f.name}")
-        else:
-            all_success = False
+    args = [
+        "--suicide-csv", str(si_csv),
+        "--therapy-request-csv", str(tr_csv),
+        "--therapy-engagement-csv", str(te_csv),
+        "--failure-multiplier", str(m),
+        "--n-mc-samples", "50000",
+        "--uncertainty-style", "both",
+    ]
     
-    return all_success
+    if dry_run:
+        logger.info(f"    [DRY RUN] Would generate m={m}")
+        return True
+    
+    success = run_python_script(script, args, logger, dry_run=dry_run)
+    
+    if success:
+        # Find and copy the output - structure is {date}/{timestamp_name}/file.png
+        src_dir = RESULTS_DIR / "risk_analysis"
+        if src_dir.exists():
+            date_dirs = sorted([d for d in src_dir.iterdir() if d.is_dir()], key=lambda x: x.name, reverse=True)
+            if date_dirs:
+                timestamp_dirs = sorted([d for d in date_dirs[0].iterdir() if d.is_dir()], key=lambda x: x.name, reverse=True)
+                if timestamp_dirs:
+                    src_output_dir = timestamp_dirs[0]
+                    # Copy figure_5.png
+                    src_png = src_output_dir / 'figure_5.png'
+                    if src_png.exists():
+                        shutil.copy(src_png, FIGURES_DIR / src_png.name)
+                        logger.info(f"    ✓ Saved: Figures/{src_png.name}")
+                    
+                    # Copy CSV to Data/processed_data/correlated_failure_analysis/
+                    for csv_file in src_output_dir.glob('p1_p2*.csv'):
+                        corr_dir = DATA_OUTPUT_DIR / "processed_data" / "correlated_failure_analysis"
+                        corr_dir.mkdir(parents=True, exist_ok=True)
+                        shutil.copy(csv_file, corr_dir / csv_file.name)
+                        logger.info(f"    ✓ Saved: Data/processed_data/correlated_failure_analysis/{csv_file.name}")
+    
+    return success
 
 
 def generate_figure_s4(logger: logging.Logger, dry_run: bool = False) -> bool:
@@ -610,7 +596,8 @@ def generate_figure_s4(logger: logging.Logger, dry_run: bool = False) -> bool:
                     # Find the most recent directory for this specific experiment
                     exp_dirs = sorted([d for d in date_dirs[0].iterdir() if d.is_dir() and d.name.startswith(prefix)], key=lambda x: x.name, reverse=True)
                     if exp_dirs:
-                        for f in exp_dirs[0].iterdir():
+                        src_exp_dir = exp_dirs[0]
+                        for f in src_exp_dir.iterdir():
                             if f.is_file() and f.name.endswith('.png'):
                                 dst_file = output_dir / f.name
                                 shutil.copy(f, dst_file)
@@ -635,15 +622,16 @@ def generate_confusion_matrices(
     output_dir = SUPP_FIGURES_DIR / "figures_S5-S7"
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    task_display_map = {
-        'suicidal_ideation': 'SI',
-        'therapy_request': 'Therapy Request',
-        'therapy_engagement': 'Therapy Engagement',
+    # Map task to figure number: SI=S5, TR=S6, TE=S7
+    task_figure_map = {
+        'suicidal_ideation': ('SI', 'figure_S5.png'),
+        'therapy_request': ('Therapy Request', 'figure_S6.png'),
+        'therapy_engagement': ('Therapy Engagement', 'figure_S7.png'),
     }
     
     all_success = True
     
-    for task_name, display_name in task_display_map.items():
+    for task_name, (display_name, figure_name) in task_figure_map.items():
         logger.info(f"  Generating {display_name} Confusion Matrix...")
         
         exp_dir = experiment_dirs[task_name]
@@ -662,9 +650,21 @@ def generate_confusion_matrices(
         success = run_python_script(script, args, logger, dry_run=dry_run)
         
         if success:
-            logger.info(f"    ✓ Saved: {task_name}_binary_confusion_matrix_grid.png")
+            # Rename to figure_S5/S6/S7.png
+            old_name = output_dir / f"{task_name}_binary_confusion_matrix_grid.png"
+            new_name = output_dir / figure_name
+            if old_name.exists():
+                old_name.rename(new_name)
+                logger.info(f"    ✓ Saved: {figure_name}")
+            else:
+                logger.warning(f"    ⚠ Output not found: {old_name.name}")
         else:
             all_success = False
+    
+    # Clean up any timestamp subfolders created by the script
+    for subdir in output_dir.iterdir():
+        if subdir.is_dir() and subdir.name.isdigit():
+            shutil.rmtree(subdir)
     
     if all_success and not dry_run:
         logger.info(f"  ✓ All confusion matrices saved to: figures_S5-S7/")
@@ -682,7 +682,7 @@ def generate_heatmaps(
     
     # First generate the correctness matrices
     matrix_script = ROOT / "analysis" / "model_performance" / "generate_model_statement_matrices.py"
-    heatmap_script = ROOT / "analysis" / "data_validation" / "generate_all_heatmaps.py"
+    heatmap_script = ROOT / "analysis" / "model_performance" / "generate_all_heatmaps.py"
     
     # Consolidated output directory
     output_dir = SUPP_FIGURES_DIR / "figures_S8-S10"
@@ -739,6 +739,13 @@ def generate_heatmaps(
     
     date_dir = date_dirs[0]
     
+    # Map task names to final figure names: SI=S8, TR=S9, TE=S10
+    task_to_figure = {
+        'suicidal_ideation': 'figure_S8.png',
+        'therapy_request': 'figure_S9.png',
+        'therapy_engagement': 'figure_S10.png',
+    }
+    
     # Copy each heatmap to the consolidated figure directory
     # Each heatmap has its own timestamped subdirectory like: 20260101_2030_si_correctness_heatmap
     all_success = True
@@ -756,14 +763,15 @@ def generate_heatmaps(
             continue
         
         heatmap_src_dir = heatmap_dirs[0]
+        figure_name = task_to_figure[task_name]
         
         # Look for the PNG file in this directory
         found = False
         for f in heatmap_src_dir.iterdir():
             if f.is_file() and f.name.endswith('.png'):
-                dst_file = output_dir / f.name
+                dst_file = output_dir / figure_name
                 shutil.copy(f, dst_file)
-                logger.info(f"    ✓ Saved: {f.name}")
+                logger.info(f"    ✓ Saved: {figure_name}")
                 found = True
                 break
         
@@ -803,59 +811,87 @@ def generate_figure_s11(
     success = run_python_script(script, args, logger, dry_run=dry_run)
     
     if success and not dry_run:
-        logger.info(f"  ✓ Saved: figure_S11/figure_s11_p2_across_m_values.png")
+        # Rename the output file to figure_S11.png
+        old_name = output_dir / "figure_s11_p2_across_m_values.png"
+        new_name = output_dir / "figure_S11.png"
+        if old_name.exists():
+            old_name.rename(new_name)
+            logger.info(f"  ✓ Saved: figure_S11/figure_S11.png")
+        else:
+            logger.warning(f"  ⚠ Output not found: {old_name.name}")
+        
+        # Move CSV outputs to Data/processed_data/correlated_failure_analysis/
+        corr_dir = DATA_OUTPUT_DIR / "processed_data" / "correlated_failure_analysis"
+        corr_dir.mkdir(parents=True, exist_ok=True)
+        
+        for csv_file in list(output_dir.glob("p1_p2_p_harm_values_m_*.csv")):
+            dst_file = corr_dir / csv_file.name
+            shutil.move(str(csv_file), str(dst_file))  # Move instead of copy
+            logger.info(f"  ✓ Saved: Data/processed_data/correlated_failure_analysis/{csv_file.name}")
+        
+        # Clean up any timestamp subfolders created by the script
+        for subdir in output_dir.iterdir():
+            if subdir.is_dir() and subdir.name.isdigit():
+                shutil.rmtree(subdir)
     
     return success
-
 
 # =============================================================================
 # Data Collection
 # =============================================================================
 
-def collect_raw_data(logger: logging.Logger, dry_run: bool = False) -> bool:
-    """Collect raw datasets."""
+def collect_raw_data(
+    experiment_dirs: Dict[str, Path],
+    logger: logging.Logger, 
+    dry_run: bool = False
+) -> bool:
+    """Collect raw datasets and model outputs."""
     log_subsection(logger, "Collecting Raw Data")
     
     raw_data_dir = DATA_OUTPUT_DIR / "raw_data"
-    raw_data_dir.mkdir(parents=True, exist_ok=True)
     
-    # Finalized datasets
+    # Statements go under model_inputs/statements/
+    statements_dir = raw_data_dir / "model_inputs" / "statements"
+    statements_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Finalized datasets (model inputs) - only the 3 actual input files used
     finalized_files = [
         "SI_finalized_sentences.csv",
         "therapy_request_finalized_sentences.csv",
         "therapy_engagement_finalized_sentences.csv",
     ]
     
-    # Raw model results (before expert review)
-    raw_model_files = [
-        "SI_balanced_100_per_category_ordered_input.csv",
-        "therapy_request_100_per_category_reformatted.csv",
-        "therapy_engagement_conversations_downsampled_150.csv",
-    ]
-    
     if dry_run:
-        logger.info(f"  [DRY RUN] Would copy {len(finalized_files) + len(raw_model_files)} files")
+        logger.info(f"  [DRY RUN] Would copy input files and model outputs")
         return True
     
-    # Copy finalized datasets
+    # Copy finalized datasets (inputs) to model_inputs/statements/
     src_dir = DATA_DIR / "inputs" / "finalized_input_data"
     for filename in finalized_files:
         src = src_dir / filename
         if src.exists():
-            shutil.copy(src, raw_data_dir / filename)
-            logger.info(f"  ✓ Copied: {filename}")
+            shutil.copy(src, statements_dir / filename)
+            logger.info(f"  ✓ Copied: model_inputs/statements/{filename}")
         else:
             logger.warning(f"  ⚠ Not found: {filename}")
     
-    # Copy raw model results
-    src_dir = DATA_DIR / "inputs" / "raw_model_results"
-    for filename in raw_model_files:
-        src = src_dir / filename
-        if src.exists():
-            shutil.copy(src, raw_data_dir / filename)
-            logger.info(f"  ✓ Copied: {filename}")
+    # Copy model output CSVs (actual model predictions)
+    model_outputs_dir = raw_data_dir / "model_outputs"
+    model_outputs_dir.mkdir(parents=True, exist_ok=True)
+    
+    for task_name, exp_dir in experiment_dirs.items():
+        task_outputs_dir = model_outputs_dir / task_name
+        task_outputs_dir.mkdir(parents=True, exist_ok=True)
+        
+        outputs_src = exp_dir / "model_outputs"
+        if outputs_src.exists():
+            csv_count = 0
+            for csv_file in outputs_src.glob("*.csv"):
+                shutil.copy(csv_file, task_outputs_dir / csv_file.name)
+                csv_count += 1
+            logger.info(f"  ✓ Copied: {task_name} model outputs ({csv_count} files)")
         else:
-            logger.warning(f"  ⚠ Not found: {filename}")
+            logger.warning(f"  ⚠ Not found: {task_name} model_outputs/")
     
     return True
 
@@ -865,110 +901,83 @@ def collect_processed_data(
     logger: logging.Logger, 
     dry_run: bool = False
 ) -> bool:
-    """Collect processed data files."""
+    """Collect processed data files into organized subdirectories."""
     log_subsection(logger, "Collecting Processed Data")
     
     processed_dir = DATA_OUTPUT_DIR / "processed_data"
-    processed_dir.mkdir(parents=True, exist_ok=True)
     
-    # Psychiatrist review files
+    # Create organized subdirectories
+    psychiatrist_dir = processed_dir / "psychiatrist_statement_review"
+    metrics_dir = processed_dir / "model_performance_metrics"
+    difficult_dir = processed_dir / "difficult_statement_analysis"
+    # Note: correlated_failure_analysis/ is created during figure generation
+    
+    for d in [psychiatrist_dir, metrics_dir, difficult_dir]:
+        d.mkdir(parents=True, exist_ok=True)
+    
+    if dry_run:
+        logger.info(f"  [DRY RUN] Would copy review files and comprehensive metrics")
+        return True
+    
+    # Copy psychiatrist review files to psychiatrist_statement_review/
     review_files = [
         "SI_psychiatrist_01_and_02_scores.csv",
         "therapy_request_psychiatrist_01_and_02_scores.csv",
         "therapy_engagement_psychiatrist_01_and_02_scores.csv",
     ]
     
-    if dry_run:
-        logger.info(f"  [DRY RUN] Would copy review files and comprehensive metrics")
-        return True
-    
-    # Copy review files
     src_dir = DATA_DIR / "inputs" / "intermediate_files"
     for filename in review_files:
         src = src_dir / filename
         if src.exists():
-            shutil.copy(src, processed_dir / filename)
-            logger.info(f"  ✓ Copied: {filename}")
+            shutil.copy(src, psychiatrist_dir / filename)
+            logger.info(f"  ✓ Copied: psychiatrist_statement_review/{filename}")
         else:
             logger.warning(f"  ⚠ Not found: {filename}")
     
-    # Copy comprehensive_metrics.csv from each experiment
+    # Copy comprehensive_metrics.csv to model_performance_metrics/ (skip if already filtered)
     for task_name, exp_dir in experiment_dirs.items():
+        dst_name = f"{task_name}_comprehensive_metrics.csv"
+        dst_path = metrics_dir / dst_name
+        
+        # Skip if already exists (from filtering step)
+        if dst_path.exists():
+            logger.info(f"  ✓ Already exists: model_performance_metrics/{dst_name} (filtered)")
+            continue
+            
         metrics_file = exp_dir / "tables" / "comprehensive_metrics.csv"
         if metrics_file.exists():
-            dst_name = f"{task_name}_comprehensive_metrics.csv"
-            shutil.copy(metrics_file, processed_dir / dst_name)
-            logger.info(f"  ✓ Copied: {dst_name}")
+            shutil.copy(metrics_file, dst_path)
+            logger.info(f"  ✓ Copied: model_performance_metrics/{dst_name}")
         else:
             logger.warning(f"  ⚠ Not found: {task_name} comprehensive_metrics.csv")
     
-    # Copy difficult statements statistics from review_statistics/
-    # Generated by generate_model_statement_matrices.py
+    # Copy difficult statements breakdown to difficult_statement_analysis/
+    # (Summary files removed - breakdown contains all needed info including metadata)
     review_stats_dir = RESULTS_DIR / "review_statistics"
     difficult_stmt_files = [
-        "suicidal_ideation_difficult_statements_summary.csv",
         "suicidal_ideation_difficult_statements_breakdown.csv",
-        "therapy_request_difficult_statements_summary.csv",
         "therapy_request_difficult_statements_breakdown.csv",
-        "therapy_engagement_difficult_statements_summary.csv",
         "therapy_engagement_difficult_statements_breakdown.csv",
     ]
     
     for filename in difficult_stmt_files:
         src = review_stats_dir / filename
         if src.exists():
-            shutil.copy(src, processed_dir / filename)
-            logger.info(f"  ✓ Copied: {filename}")
+            shutil.copy(src, difficult_dir / filename)
+            logger.info(f"  ✓ Copied: difficult_statement_analysis/{filename}")
         else:
             logger.warning(f"  ⚠ Not found: {filename}")
     
-    # Copy P1/P2/P_harm computed values from figure_5/
-    # Generated by p1_and_p2_plot_provenance.py
-    figure5_dir = FIGURES_DIR / "figure_5"
-    if figure5_dir.exists():
-        for csv_file in figure5_dir.glob("p1_p2_p_harm_values_*.csv"):
-            shutil.copy(csv_file, processed_dir / csv_file.name)
-            logger.info(f"  ✓ Copied: {csv_file.name}")
-    
-    return True
-
-
-def collect_model_outputs(
-    experiment_dirs: Dict[str, Path],
-    logger: logging.Logger,
-    dry_run: bool = False
-) -> bool:
-    """Collect and compress model outputs."""
-    log_subsection(logger, "Collecting Model Outputs")
-    
-    tar_path = DATA_OUTPUT_DIR / "model_outputs.tar.gz"
-    
-    if dry_run:
-        logger.info(f"  [DRY RUN] Would create: model_outputs.tar.gz")
-        return True
-    
-    DATA_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    
-    with tarfile.open(tar_path, "w:gz") as tar:
-        for task_name, exp_dir in experiment_dirs.items():
-            outputs_dir = exp_dir / "model_outputs"
-            if outputs_dir.exists():
-                for csv_file in outputs_dir.glob("*.csv"):
-                    arcname = f"{task_name}/{csv_file.name}"
-                    tar.add(csv_file, arcname=arcname)
-                logger.info(f"  ✓ Added {task_name} model outputs")
-            else:
-                logger.warning(f"  ⚠ Not found: {task_name} model_outputs/")
-    
-    logger.info(f"  ✓ Created: model_outputs.tar.gz")
     return True
 
 
 def collect_prompts(logger: logging.Logger, dry_run: bool = False) -> bool:
-    """Collect prompt files."""
+    """Collect prompt files to raw_data/model_inputs/prompts/."""
     log_subsection(logger, "Collecting Prompts")
     
-    prompts_dir = DATA_OUTPUT_DIR / "prompts"
+    # Prompts go under raw_data/model_inputs/prompts/
+    prompts_dir = DATA_OUTPUT_DIR / "raw_data" / "model_inputs" / "prompts"
     prompts_dir.mkdir(parents=True, exist_ok=True)
     
     # Classification prompts
@@ -988,7 +997,7 @@ def collect_prompts(logger: logging.Logger, dry_run: bool = False) -> bool:
         src = src_dir / filename
         if src.exists():
             shutil.copy(src, prompts_dir / filename)
-            logger.info(f"  ✓ Copied: {filename}")
+            logger.info(f"  ✓ Copied: model_inputs/prompts/{filename}")
         else:
             logger.warning(f"  ⚠ Not found: {filename}")
     
@@ -997,9 +1006,36 @@ def collect_prompts(logger: logging.Logger, dry_run: bool = False) -> bool:
     gemini_dst_dir = prompts_dir / "gemini_prompts"
     if gemini_src_dir.exists():
         shutil.copytree(gemini_src_dir, gemini_dst_dir)
-        logger.info(f"  ✓ Copied: gemini_prompts/")
+        logger.info(f"  ✓ Copied: model_inputs/prompts/gemini_prompts/")
     
     return True
+
+
+def generate_table_s7(logger: logging.Logger, dry_run: bool = False) -> bool:
+    """Generate Table S7: P1/P2 Parameter Summary to raw_data/model_inputs/."""
+    log_subsection(logger, "Generating Table S7: P1/P2 Parameters")
+    
+    script = ROOT / "analysis" / "generate_table_s7.py"
+    # Table S7 goes under raw_data/model_inputs/
+    output_dir = DATA_OUTPUT_DIR / "raw_data" / "model_inputs"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    output_file = output_dir / "table_s7_parameters.csv"
+    
+    args = [
+        "-o", str(output_file),
+    ]
+    
+    if dry_run:
+        logger.info(f"  [DRY RUN] Would generate Table S7")
+        return True
+    
+    success = run_python_script(script, args, logger, dry_run=dry_run)
+    
+    if success:
+        logger.info(f"  ✓ Saved: raw_data/model_inputs/table_s7_parameters.csv")
+    
+    return success
 
 
 def collect_model_info(
@@ -1008,25 +1044,25 @@ def collect_model_info(
     logger: logging.Logger, 
     dry_run: bool = False
 ) -> bool:
-    """Extract model information to CSV."""
+    """Extract model information to raw_data/model_info/."""
     log_subsection(logger, "Collecting Model Information")
     
     import pandas as pd
     
-    model_info_dir = DATA_OUTPUT_DIR / "model_info"
+    # Model info goes under raw_data/model_info/
+    model_info_dir = DATA_OUTPUT_DIR / "raw_data" / "model_info"
     model_info_dir.mkdir(parents=True, exist_ok=True)
     
     if dry_run:
         logger.info(f"  [DRY RUN] Would create model_info.csv")
         return True
     
-    # Read full config
-    config_path = ROOT / "config" / "models_config.csv"
-    if not config_path.exists():
-        logger.warning(f"  ⚠ Config not found: {config_path}")
+    # Read from the models config that was passed in (regulatory_paper_models.csv)
+    if not models_config_path.exists():
+        logger.warning(f"  ⚠ Config not found: {models_config_path}")
         return False
     
-    df = pd.read_csv(config_path)
+    df = pd.read_csv(models_config_path)
     
     # Filter to paper models
     paper_model_rows = []
@@ -1040,15 +1076,7 @@ def collect_model_info(
         paper_df = pd.DataFrame(paper_model_rows)
         output_path = model_info_dir / "paper_models_config.csv"
         paper_df.to_csv(output_path, index=False)
-        logger.info(f"  ✓ Created: paper_models_config.csv ({len(paper_df)} models)")
-    
-    # Copy the models config used for this run
-    shutil.copy(models_config_path, model_info_dir / "models_config_used.csv")
-    logger.info(f"  ✓ Copied: models_config_used.csv")
-    
-    # Also copy full config for reference
-    shutil.copy(config_path, model_info_dir / "models_config_full.csv")
-    logger.info(f"  ✓ Copied: models_config_full.csv")
+        logger.info(f"  ✓ Created: raw_data/model_info/paper_models_config.csv ({len(paper_df)} models)")
     
     # Create a manifest
     manifest = {
@@ -1059,8 +1087,186 @@ def collect_model_info(
     manifest_path = model_info_dir / "manifest.json"
     with open(manifest_path, 'w') as f:
         json.dump(manifest, f, indent=2)
-    logger.info(f"  ✓ Created: manifest.json")
+    logger.info(f"  ✓ Created: raw_data/model_info/manifest.json")
     
+    return True
+
+
+def extract_provenance_from_pngs(logger: logging.Logger, dry_run: bool = False) -> bool:
+    """Extract provenance JSON from all PNG figures to Logs/figure_provenance/."""
+    log_subsection(logger, "Extracting Provenance from PNGs")
+    
+    try:
+        from PIL import Image
+    except ImportError:
+        logger.error("  ✗ PIL/Pillow not available - cannot extract provenance")
+        return False
+    
+    # Provenance goes under Logs/figure_provenance/
+    provenance_dir = LOGS_DIR / "figure_provenance"
+    provenance_dir.mkdir(parents=True, exist_ok=True)
+    
+    if dry_run:
+        logger.info(f"  [DRY RUN] Would extract provenance from PNGs")
+        return True
+    
+    # Define all PNG files to extract from
+    png_files = [
+        # Main figures
+        (FIGURES_DIR / "figure_3.png", "figure_3"),
+        (FIGURES_DIR / "figure_4.png", "figure_4"),
+        (FIGURES_DIR / "figure_5.png", "figure_5"),
+        # Supplementary figures
+        (SUPP_FIGURES_DIR / "figure_S4" / "si_psychiatrist_review_sankey.png", "figure_S4_si"),
+        (SUPP_FIGURES_DIR / "figure_S4" / "therapy_request_psychiatrist_review_sankey.png", "figure_S4_therapy_request"),
+        (SUPP_FIGURES_DIR / "figure_S4" / "therapy_engagement_psychiatrist_review_sankey.png", "figure_S4_therapy_engagement"),
+        (SUPP_FIGURES_DIR / "figures_S5-S7" / "figure_S5.png", "figure_S5"),
+        (SUPP_FIGURES_DIR / "figures_S5-S7" / "figure_S6.png", "figure_S6"),
+        (SUPP_FIGURES_DIR / "figures_S5-S7" / "figure_S7.png", "figure_S7"),
+        (SUPP_FIGURES_DIR / "figures_S8-S10" / "figure_S8.png", "figure_S8"),
+        (SUPP_FIGURES_DIR / "figures_S8-S10" / "figure_S9.png", "figure_S9"),
+        (SUPP_FIGURES_DIR / "figures_S8-S10" / "figure_S10.png", "figure_S10"),
+        (SUPP_FIGURES_DIR / "figure_S11" / "figure_S11.png", "figure_S11"),
+    ]
+    
+    extracted_count = 0
+    missing_count = 0
+    no_provenance_count = 0
+    
+    for png_path, figure_name in png_files:
+        if not png_path.exists():
+            logger.warning(f"  ⚠ PNG not found: {png_path.name}")
+            missing_count += 1
+            continue
+        
+        try:
+            img = Image.open(png_path)
+            # Try both lowercase and uppercase keys
+            prov_json = img.text.get('provenance') or img.text.get('Provenance')
+            
+            if prov_json:
+                # Save extracted provenance to JSON file
+                json_path = provenance_dir / f"{figure_name}_provenance.json"
+                prov_data = json.loads(prov_json)
+                with open(json_path, 'w') as f:
+                    json.dump(prov_data, f, indent=2)
+                logger.info(f"  ✓ Extracted: {figure_name}_provenance.json")
+                extracted_count += 1
+            else:
+                logger.warning(f"  ⚠ No provenance in: {png_path.name}")
+                no_provenance_count += 1
+        except Exception as e:
+            logger.error(f"  ✗ Error extracting from {png_path.name}: {e}")
+            no_provenance_count += 1
+    
+    logger.info(f"")
+    logger.info(f"  Summary: {extracted_count} extracted, {missing_count} missing, {no_provenance_count} without provenance")
+    
+    return no_provenance_count == 0  # Return False if any PNGs are missing provenance
+
+
+def generate_readme(logger: logging.Logger, dry_run: bool = False) -> bool:
+    """Generate README.md explaining the directory structure."""
+    log_subsection(logger, "Generating README")
+    
+    readme_path = PAPER_OUTPUT_BASE / "README.md"
+    
+    if dry_run:
+        logger.info(f"  [DRY RUN] Would generate README.md")
+        return True
+    
+    readme_content = f"""# Regulatory Simulation Paper - Pipeline Output
+
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+This directory contains all figures, data, and logs generated by the regulatory simulation paper pipeline.
+
+## Directory Structure
+
+```
+{PAPER_OUTPUT_BASE.name}/
+├── README.md                    # This file
+├── Figures/                     # Main manuscript figures
+│   ├── figure_3.png            # Psychiatrist review breakdown (approved/modified/removed)
+│   ├── figure_4.png            # Model performance metrics (parse rate, sensitivity, specificity, accuracy, F1)
+│   └── figure_5/               # P1/P2/P_harm risk analysis across failure multiplier values
+│
+├── Supplementary_Figures/       # Supplementary figures
+│   ├── figure_S4/              # Sankey diagrams showing ground truth → model prediction flows
+│   ├── figures_S5-S7/          # Binary confusion matrices (SI, Therapy Request, Therapy Engagement)
+│   ├── figures_S8-S10/         # Per-statement accuracy heatmaps showing model × statement performance
+│   └── figure_S11/             # P2 across failure multiplier (M) values
+│
+├── Data/
+│   ├── raw_data/
+│   │   ├── model_info/         # Model configuration used in this run
+│   │   │   ├── paper_models_config.csv   # Models included in analysis
+│   │   │   └── manifest.json             # Run metadata
+│   │   ├── model_inputs/
+│   │   │   ├── prompts/        # Classification prompts sent to models
+│   │   │   │   ├── system_suicide_detection_v2.txt
+│   │   │   │   ├── therapy_request_classifier_v3.txt
+│   │   │   │   ├── therapy_engagement_conversation_prompt_v2.txt
+│   │   │   │   └── gemini_prompts/       # Prompts used to generate synthetic data
+│   │   │   ├── statements/     # Input datasets (ground truth statements)
+│   │   │   │   ├── SI_finalized_sentences.csv
+│   │   │   │   ├── therapy_request_finalized_sentences.csv
+│   │   │   │   └── therapy_engagement_finalized_sentences.csv
+│   │   │   └── table_s7_parameters.csv   # P1/P2 risk model parameters (Supplementary Table 7)
+│   │   └── model_outputs/      # Raw model predictions by task
+│   │       ├── suicidal_ideation/
+│   │       ├── therapy_request/
+│   │       └── therapy_engagement/
+│   │
+│   └── processed_data/         # Analysis outputs
+│       ├── model_performance_metrics/    # Comprehensive metrics CSVs
+│       ├── psychiatrist_statement_review/  # Psychiatrist review data
+│       ├── correlated_failure_analysis/    # P1/P2 data across M values
+│       └── difficult_statement_analysis/   # Statements difficult for models
+│
+└── Logs/
+    ├── pipeline.log            # Full pipeline execution log
+    ├── manuscript_claims_verification.md   # Verification of manuscript claims vs data
+    ├── figure_provenance/      # Provenance JSON files
+    │   ├── figure_*_provenance.json       # Figure provenance (input hashes, timestamps)
+    │   └── *_audit_summary.json           # Audit provenance (verification summaries)
+    └── Audits/                 # Detailed audit reports (CSV)
+        ├── cache_audit_report.csv              # Cache integrity check
+        ├── confusion_matrix_audit_report.csv   # Figures 4, S5-S7 verification
+        ├── heatmap_audit_report.csv            # Figures S8-S10 verification
+        └── figure_s11_audit_report.csv         # Figure S11 verification
+```
+
+## Key Files
+
+### Figures
+- **figure_3.png**: Shows psychiatrist review outcomes for each task
+- **figure_4.png**: Model performance comparison with binary classification metrics
+- **figure_5/**: Risk analysis showing P1, P2, and P_harm across model sizes
+
+### Verification & Provenance
+- **Logs/figure_provenance/**: JSON files with complete provenance
+  - `figure_*_provenance.json`: SHA-256 hashes of input files, timestamps, parameters
+  - `*_audit_summary.json`: Audit verification summaries (what was checked, pass/fail)
+- **Logs/Audits/**: Detailed CSV audit reports
+  - Each audit recalculates metrics from raw data and compares to reported values
+  - All audits should show 100% pass rate for a valid pipeline run
+
+## Reproducibility
+
+To regenerate these results:
+
+```bash
+python run_regulatory_simulation_paper_pipeline.py --models-config config/regulatory_paper_models.csv
+```
+
+The pipeline uses cached LLM responses from `regulatory_paper_cache_v3/results.db` to ensure exact reproducibility.
+"""
+    
+    with open(readme_path, 'w') as f:
+        f.write(readme_content)
+    
+    logger.info(f"  ✓ Created: README.md")
     return True
 
 
@@ -1075,9 +1281,11 @@ def run_pipeline(args: argparse.Namespace) -> int:
     models_config_path = Path(args.models_config)
     paper_models = load_models_from_config(models_config_path)
     
-    # Setup - put log in the output directory
+    # Setup - create output directory and Logs folder
     PAPER_OUTPUT_BASE.mkdir(parents=True, exist_ok=True)
-    log_file = PAPER_OUTPUT_BASE / "pipeline.log"
+    logs_dir = PAPER_OUTPUT_BASE / "Logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    log_file = logs_dir / "pipeline.log"
     
     logger = setup_logging(log_file)
     
@@ -1159,6 +1367,38 @@ def run_pipeline(args: argparse.Namespace) -> int:
             logger.error(f"  ✗ Directory not found: {exp_dir}")
             return 1
     
+    # Verify all models used Q8_0 quantization
+    log_subsection(logger, "Verifying Q8_0 Quantization")
+    if not args.dry_run:
+        import sqlite3
+        cache_db = ROOT / args.cache_dir / "results.db"
+        if cache_db.exists():
+            conn = sqlite3.connect(cache_db)
+            cursor = conn.execute('''
+                SELECT DISTINCT mf.model_key, ck.quantization_name
+                FROM cache_keys ck
+                JOIN model_files mf ON ck.model_path = mf.model_path
+                ORDER BY mf.model_key
+            ''')
+            quants = cursor.fetchall()
+            conn.close()
+            
+            non_q8_models = [(model, quant) for model, quant in quants if quant != 'Q8_0']
+            
+            if non_q8_models:
+                logger.error(f"  ✗ Found {len(non_q8_models)} models with non-Q8_0 quantization:")
+                for model, quant in non_q8_models:
+                    logger.error(f"    {model}: {quant}")
+                logger.error(f"  All models must be Q8_0 for paper consistency")
+                return 1
+            else:
+                logger.info(f"  ✓ All {len(quants)} models verified as Q8_0")
+        else:
+            logger.warning(f"  ⚠ Cache database not found: {cache_db}")
+            logger.warning(f"    Cannot verify quantizations - proceeding anyway")
+    else:
+        logger.info(f"  [DRY RUN] Would verify Q8_0 quantization")
+    
     success = True
     
     # Create filtered CSVs only for overrides (regenerated data already has only paper models)
@@ -1168,11 +1408,11 @@ def run_pipeline(args: argparse.Namespace) -> int:
         if needs_filtering.get(task_name, False):
             # Override provided - need to filter
             log_subsection(logger, f"Filtering {task_name} to paper models")
-            filtered_csv_dir = DATA_OUTPUT_DIR / "filtered_metrics"
-            filtered_csv_dir.mkdir(parents=True, exist_ok=True)
+            metrics_dir = DATA_OUTPUT_DIR / "processed_data" / "model_performance_metrics"
+            metrics_dir.mkdir(parents=True, exist_ok=True)
             
             input_csv = exp_dir / "tables" / "comprehensive_metrics.csv"
-            output_csv = filtered_csv_dir / f"{task_name}_comprehensive_metrics.csv"
+            output_csv = metrics_dir / f"{task_name}_comprehensive_metrics.csv"
             
             if not args.dry_run:
                 if filter_comprehensive_metrics(input_csv, output_csv, paper_models, logger):
@@ -1218,29 +1458,36 @@ def run_pipeline(args: argparse.Namespace) -> int:
     if not args.figures_only:
         log_section(logger, "COLLECTING DATA")
         
-        if not collect_raw_data(logger, args.dry_run):
+        if not collect_raw_data(experiment_dirs, logger, args.dry_run):
             success = False
         
         if not collect_processed_data(experiment_dirs, logger, args.dry_run):
             success = False
         
-        if not collect_model_outputs(experiment_dirs, logger, args.dry_run):
-            success = False
         
         if not collect_prompts(logger, args.dry_run):
             success = False
         
         if not collect_model_info(paper_models, models_config_path, logger, args.dry_run):
             success = False
+        
+        if not generate_table_s7(logger, args.dry_run):
+            success = False
     else:
         logger.info("")
         logger.info("⏭  Skipping data collection (--figures-only)")
+    
+    # Extract provenance from PNGs to verify embedding and create JSON files
+    log_section(logger, "EXTRACTING FIGURE PROVENANCE FROM PNGS")
+    if not extract_provenance_from_pngs(logger, args.dry_run):
+        logger.warning("  ⚠ Some figures missing embedded provenance (non-critical)")
+        # Don't fail pipeline for missing provenance
     
     # Generate manuscript claims verification report
     log_section(logger, "GENERATING MANUSCRIPT CLAIMS VERIFICATION")
     
     verification_script = ROOT / "analysis" / "manuscript_claims_verification.py"
-    verification_output = PAPER_OUTPUT_BASE / "MANUSCRIPT_CLAIMS_VERIFICATION.md"
+    verification_output = logs_dir / "manuscript_claims_verification.md"
     
     verification_args = [
         "--paper-run-dir", str(PAPER_OUTPUT_BASE),
@@ -1258,6 +1505,81 @@ def run_pipeline(args: argparse.Namespace) -> int:
     else:
         logger.info(f"  [DRY RUN] Would generate verification report")
     
+    # Audits - all go to Logs/Audits/
+    log_section(logger, "AUDITS")
+    audits_dir = LOGS_DIR / "Audits"
+    audits_dir.mkdir(parents=True, exist_ok=True)
+    
+    if not args.dry_run and not args.figures_only:
+        # Cache Audit
+        logger.info("  Running cache audit...")
+        try:
+            audit_output = audits_dir / "cache_audit_report.csv"
+            audit_df = audit_cache(args.cache_dir, str(models_config_path), verbose=False)
+            audit_df.to_csv(audit_output, index=False)
+            
+            # Log summary stats
+            total_models = len(audit_df)
+            models_with_issues = len(audit_df[
+                (audit_df['SI_success'] < audit_df['SI_total']) |
+                (audit_df['TR_success'] < audit_df['TR_total']) |
+                (audit_df['TE_success'] < audit_df['TE_total']) |
+                (audit_df['wrong_params'] > 0)
+            ])
+            
+            logger.info(f"  ✓ Cache audit complete: {total_models} models audited")
+            if models_with_issues > 0:
+                logger.info(f"    ⚠ {models_with_issues} models have parse failures or parameter issues")
+        except Exception as e:
+            logger.warning(f"  ⚠ Cache audit failed (non-critical): {e}")
+        
+        # Confusion Matrix Audit (Figures 4, S5-S7)
+        logger.info("  Running confusion matrix audit (Figures 4, S5-S7)...")
+        cm_audit_script = ROOT / "utilities" / "confusion_matrix_audit.py"
+        cm_audit_args = [
+            "--paper-run-dir", str(PAPER_OUTPUT_BASE),
+            "--cache-dir", args.cache_dir,
+            "--output", str(audits_dir / "confusion_matrix_audit_report.csv"),
+        ]
+        cm_audit_success = run_python_script(cm_audit_script, cm_audit_args, logger, dry_run=args.dry_run)
+        if cm_audit_success:
+            logger.info(f"  ✓ Confusion matrix audit passed")
+        else:
+            logger.warning(f"  ⚠ Confusion matrix audit FAILED - review report")
+        
+        # Heatmap Audit (Figures S8-S10)
+        logger.info("  Running heatmap audit (Figures S8-S10)...")
+        hm_audit_script = ROOT / "utilities" / "heatmap_audit.py"
+        hm_audit_args = [
+            "--paper-run-dir", str(PAPER_OUTPUT_BASE),
+            "--output", str(audits_dir / "heatmap_audit_report.csv"),
+        ]
+        hm_audit_success = run_python_script(hm_audit_script, hm_audit_args, logger, dry_run=args.dry_run)
+        if hm_audit_success:
+            logger.info(f"  ✓ Heatmap audit passed")
+        else:
+            logger.warning(f"  ⚠ Heatmap audit FAILED - review report")
+        
+        # Figure S11 Audit (P2 across failure multiplier values)
+        logger.info("  Running Figure S11 audit (P2 across M values)...")
+        s11_audit_script = ROOT / "utilities" / "figure_s11_audit.py"
+        s11_audit_args = [
+            "--paper-run-dir", str(PAPER_OUTPUT_BASE),
+            "--output", str(audits_dir / "figure_s11_audit_report.csv"),
+        ]
+        s11_audit_success = run_python_script(s11_audit_script, s11_audit_args, logger, dry_run=args.dry_run)
+        if s11_audit_success:
+            logger.info(f"  ✓ Figure S11 audit passed")
+        else:
+            logger.warning(f"  ⚠ Figure S11 audit FAILED - review report")
+        
+        logger.info(f"  ✓ Audit reports saved to: {audits_dir}")
+    else:
+        logger.info(f"  [SKIPPED] Audits (dry-run or figures-only mode)")
+    
+    # Generate README
+    generate_readme(logger, args.dry_run)
+    
     # Summary
     log_section(logger, "PIPELINE COMPLETE")
     
@@ -1266,8 +1588,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
     logger.info(f"  Supplementary:        {SUPP_FIGURES_DIR}")
     if not args.figures_only:
         logger.info(f"  Data:                 {DATA_OUTPUT_DIR}")
-    logger.info(f"  Verification Report:  {verification_output}")
-    logger.info(f"  Log file:             {log_file}")
+    logger.info(f"  Logs:                 {logs_dir}")
     logger.info("")
     
     if success:

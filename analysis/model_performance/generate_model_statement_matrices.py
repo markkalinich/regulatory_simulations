@@ -37,38 +37,6 @@ from utilities.classification_utils import (
 )
 
 
-def normalize_therapy_request(label):
-    """
-    Convert detailed therapy request ground truth labels to simplified prediction format
-    
-    Ground truth uses format like:
-    - "Neutral Explicit Requests for Therapy"
-    - "Affect-Containing Explicit Requests for Therapy - Clearly Happy"
-    - "Neutral Declarative Statements"
-    - "Affect-Containing Non-Therapeutic Questions - Clearly Sad"
-    
-    Predictions use format like:
-    - "explicit_therapy_request"
-    - "declarative"
-    - "non_therapeutic_question"
-    """
-    if pd.isna(label):
-        return None
-    
-    label_str = str(label)
-    
-    # Map to simplified categories
-    if 'Explicit Requests for Therapy' in label_str:
-        return 'explicit_therapy_request'
-    elif 'Declarative' in label_str:
-        return 'declarative'
-    elif 'Non-Therapeutic' in label_str:
-        return 'non_therapeutic_question'
-    
-    # Return as-is if no match (shouldn't happen with correct data)
-    return label_str
-
-
 def load_all_model_outputs(experiment_dir):
     """
     Load all model output files from an experiment directory
@@ -125,6 +93,14 @@ def create_correctness_matrix(model_outputs, ground_truth_column, prediction_col
                 correctness.append(np.nan)
             else:
                 stmt_row = model_text_lookup[stmt_text]
+                
+                # Check for parse failure - always count as incorrect
+                # This matches the confusion matrix logic where parse failures are errors
+                status = stmt_row.get('status', 'ok')
+                if status != 'ok':
+                    correctness.append(0)  # Parse failure = incorrect
+                    continue
+                
                 ground_truth = stmt_row[ground_truth_column]
                 prediction = stmt_row[prediction_column]
                 
@@ -378,28 +354,25 @@ def main():
         
         print(f"  Category breakdown: {category_breakdown}")
         
-        # Save difficult statements summary to CSV
-        summary_data = {
-            'task': [exp['name']],
-            'total_statements': [matrix_df.shape[1]],
-            'total_models': [matrix_df.shape[0]],
-            'difficult_count': [difficult_count],
-            'difficult_pct': [difficult_pct],
-            'category_breakdown': [str(category_breakdown)]
-        }
-        summary_df = pd.DataFrame(summary_data)
+        # Save difficult statements breakdown to CSV (includes metadata)
+        breakdown_rows = [
+            {
+                'task': exp['name'], 
+                'category': cat, 
+                'count': count,
+                'total_statements': matrix_df.shape[1],
+                'total_models': matrix_df.shape[0],
+                'difficult_count': difficult_count,
+                'difficult_pct': difficult_pct
+            } 
+            for cat, count in category_breakdown.items()
+        ]
+        breakdown_df = pd.DataFrame(breakdown_rows) if breakdown_rows else pd.DataFrame(
+            columns=['task', 'category', 'count', 'total_statements', 'total_models', 'difficult_count', 'difficult_pct']
+        )
         
-        # Also save detailed breakdown
-        breakdown_rows = [{'task': exp['name'], 'category': cat, 'count': count} 
-                         for cat, count in category_breakdown.items()]
-        breakdown_df = pd.DataFrame(breakdown_rows) if breakdown_rows else pd.DataFrame(columns=['task', 'category', 'count'])
-        
-        summary_file = output_dir / f"{exp['name']}_difficult_statements_summary.csv"
         breakdown_file = output_dir / f"{exp['name']}_difficult_statements_breakdown.csv"
-        
-        summary_df.to_csv(summary_file, index=False)
         breakdown_df.to_csv(breakdown_file, index=False)
-        print(f"Saved difficult statements summary to: {summary_file}")
         print(f"Saved difficult statements breakdown to: {breakdown_file}")
 
 

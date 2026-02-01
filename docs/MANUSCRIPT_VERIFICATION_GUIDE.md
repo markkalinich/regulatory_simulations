@@ -7,7 +7,7 @@
 
 ## Overview
 
-This system provides automated verification that all numerical claims in the manuscript match the actual pipeline output. 
+This system provides automated verification that all numerical claims in the manuscript match the actual pipeline output. It was implemented to catch discrepancies after switching from mixed MLX/GGUF models to GGUF-only, which changed several key results.
 
 ### Key Components
 

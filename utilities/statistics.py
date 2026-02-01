@@ -16,10 +16,6 @@ def clopper_pearson_ci(successes: int, n: int, alpha: float = 0.05) -> Tuple[flo
     """
     Compute Clopper-Pearson exact binomial confidence interval.
     
-    This is the gold standard for binomial proportion CIs - it's exact (not an
-    approximation) and guarantees at least the stated coverage. The only 
-    "downside" is compute (inverting Beta distributions), which is negligible.
-    
     Args:
         successes: Number of successes (int)
         n: Total number of trials (int)
@@ -52,56 +48,55 @@ def clopper_pearson_ci(successes: int, n: int, alpha: float = 0.05) -> Tuple[flo
 
 
 def bootstrap_f1_ci(
-    tp: int, fp: int, fn: int,
+    tp: int, fp: int, fn: int, tn: int,
     n_bootstrap: int = 10000, 
     alpha: float = 0.05,
     random_state: Optional[int] = None
 ) -> Tuple[float, float]:
     """
-    Compute bootstrap confidence interval for F1 score from confusion matrix counts.
+    Compute non-parametric bootstrap confidence interval for F1 score.
     
-    F1 = 2*TP / (2*TP + FP + FN) is not a simple binomial proportion.
-    This uses parametric bootstrap by resampling from the multinomial distribution
-    implied by the observed confusion matrix.
+    F1 = 2*TP / (2*TP + FP + FN)
+    This uses non-parametric bootstrap by resampling the observed outcomes
+    with replacement and recomputing F1 for each bootstrap sample. 
+    This is equivalent to bootstrapping the dataset rows (given only the aggregated counts).
     
     Args:
         tp: True positives
         fp: False positives  
         fn: False negatives
+        tn: True negatives
         n_bootstrap: Number of bootstrap samples (default 10000)
         alpha: Significance level (default 0.05 for 95% CI)
         random_state: Random seed for reproducibility
         
     Returns:
-        tuple: (lower_bound, upper_bound) F1 scores
+        tuple: (lower_bound, upper_bound) F1 scores, or (NaN, NaN) if N=0
     """
-    if random_state is not None:
-        np.random.seed(random_state)
+    # Total samples (full confusion matrix)
+    n_total = tp + fp + fn + tn
+    if n_total == 0:
+        return (float('nan'), float('nan'))
     
-    # Total relevant samples for F1 calculation
-    total = tp + fp + fn
-    if total == 0:
-        return (0.0, 0.0)
+    # Initialize RNG
+    rng = np.random.default_rng(random_state)
     
-    # Observed proportions
-    p_tp = tp / total
-    p_fp = fp / total
-    p_fn = fn / total
+    # Reconstruct observed outcomes: 0=TP, 1=FP, 2=FN, 3=TN
+    observations = np.array([0]*tp + [1]*fp + [2]*fn + [3]*tn)
     
-    f1_samples = []
-    for _ in range(n_bootstrap):
-        # Resample from multinomial
-        counts = np.random.multinomial(total, [p_tp, p_fp, p_fn])
-        tp_boot, fp_boot, fn_boot = counts
+    f1_samples = np.empty(n_bootstrap)
+    for i in range(n_bootstrap):
+        # Resample observations with replacement
+        resampled = rng.choice(observations, size=n_total, replace=True)
         
-        # Calculate F1 for this bootstrap sample
+        # Count outcomes in resampled data
+        tp_boot = np.sum(resampled == 0)
+        fp_boot = np.sum(resampled == 1)
+        fn_boot = np.sum(resampled == 2)
+        
+        # Calculate F1
         denom = 2 * tp_boot + fp_boot + fn_boot
-        if denom > 0:
-            f1 = 2 * tp_boot / denom
-            f1_samples.append(f1)
-    
-    if len(f1_samples) == 0:
-        return (0.0, 0.0)
+        f1_samples[i] = (2 * tp_boot / denom) if denom > 0 else 0.0
     
     lower = np.percentile(f1_samples, 100 * alpha/2)
     upper = np.percentile(f1_samples, 100 * (1 - alpha/2))

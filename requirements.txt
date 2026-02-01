@@ -11,10 +11,13 @@ pandas==2.2.3
 
 # Machine learning and metrics
 scikit-learn==1.5.2
+scipy==1.11.4
 
 # Visualization and plotting
 matplotlib==3.9.2
 seaborn==0.13.2
+kaleido==0.2.1
+Pillow==10.4.0
 
 # Configuration management
 pyyaml==6.0.2

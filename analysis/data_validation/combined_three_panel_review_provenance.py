@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 """
-Generate combined three-panel barplot showing expert review status across all three datasets 
+Generate combined three-panel barplot showing psychiatrist review status across all three datasets 
 with full data provenance tracking.
 
 Panel 1: SI sentences (10 categories)
 Panel 2: Therapy request sentences (12 categories)
 Panel 3: Therapy engagement conversations (13 categories)
-
-Key features:
-- Normalized y-axes (0-100%) for consistent aspect ratios
-- Larger font sizes for readability
-- Vertical layout (single column, 3 rows)
-- Consistent color scheme across all panels (green=kept, yellow=modified, red=removed)
+- green=kept, yellow=modified, red=removed
 
 Data provenance features:
 - Tracks all three input datasets with SHA256 hashes

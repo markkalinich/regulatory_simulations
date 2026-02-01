@@ -37,6 +37,13 @@ from typing import List, Dict, Any, Optional, Union
 import pandas as pd
 import shutil
 
+try:
+    from PIL import Image
+    from PIL.PngImagePlugin import PngInfo
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+
 
 class FigureProvenanceTracker:
     """
@@ -231,8 +238,16 @@ class FigureProvenanceTracker:
         """
         return self.output_dir / filename
     
-    def save_provenance(self):
-        """Save provenance metadata to JSON file."""
+    def save_provenance(self, embed_in_png: bool = True):
+        """
+        Save provenance metadata to JSON file and optionally embed in PNG outputs.
+        
+        Args:
+            embed_in_png: If True, also embed provenance in all PNG output files (default: True)
+        
+        Returns:
+            Path to the saved provenance JSON file
+        """
         provenance_path = self.output_dir / "data_provenance.json"
         
         provenance_data = {
@@ -253,7 +268,126 @@ class FigureProvenanceTracker:
         print(f"  Total inputs: {len(self.input_datasets)}")
         print(f"  Total outputs: {len(self.output_files)}")
         
+        # Embed provenance in PNG files
+        if embed_in_png:
+            embedded_count = self.embed_provenance_in_all_outputs(verbose=True)
+            if embedded_count > 0:
+                print(f"  Embedded in {embedded_count} PNG file(s)")
+        
         return provenance_path
+    
+    def embed_provenance_in_png(self, png_path: Union[str, Path], verbose: bool = True) -> bool:
+        """
+        Embed provenance metadata directly into a PNG file's tEXt chunks.
+        
+        The metadata survives file copying and renaming, but may be lost
+        if the image is edited, cropped, or re-encoded by other software.
+        
+        Args:
+            png_path: Path to the PNG file to embed metadata into
+            verbose: Print status messages (default: True)
+        
+        Returns:
+            True if successful, False if failed (e.g., PIL not available)
+        """
+        if not PIL_AVAILABLE:
+            if verbose:
+                print("  ⚠ PIL/Pillow not available - skipping PNG metadata embedding")
+            return False
+        
+        png_path = Path(png_path)
+        if not png_path.exists():
+            if verbose:
+                print(f"  ⚠ PNG file not found: {png_path}")
+            return False
+        
+        # Build provenance data
+        provenance_data = {
+            "figure_name": self.figure_name,
+            "generated_at": datetime.now().isoformat(),
+            "date": self.date,
+            "time": datetime.now().strftime('%H:%M:%S'),
+            "input_datasets": self.input_datasets,
+            "analysis_parameters": self.analysis_parameters,
+            "output_files": self.output_files,
+            "reproducibility_command": self.reproducibility_command
+        }
+        
+        try:
+            # Open the image
+            img = Image.open(png_path)
+            
+            # Create PNG metadata
+            metadata = PngInfo()
+            metadata.add_text("provenance", json.dumps(provenance_data))
+            metadata.add_text("figure_name", self.figure_name)
+            metadata.add_text("generated_at", provenance_data["generated_at"])
+            
+            # Re-save with metadata
+            img.save(png_path, pnginfo=metadata)
+            
+            if verbose:
+                print(f"  ✓ Embedded provenance in: {png_path.name}")
+            return True
+            
+        except Exception as e:
+            if verbose:
+                print(f"  ⚠ Failed to embed provenance: {e}")
+            return False
+    
+    def embed_provenance_in_all_outputs(self, verbose: bool = True) -> int:
+        """
+        Embed provenance metadata in all PNG output files.
+        
+        Args:
+            verbose: Print status messages (default: True)
+        
+        Returns:
+            Number of files successfully embedded
+        """
+        embedded_count = 0
+        for output_info in self.output_files:
+            file_path = Path(output_info["file_path"])
+            if file_path.suffix.lower() == '.png' and file_path.exists():
+                if self.embed_provenance_in_png(file_path, verbose=verbose):
+                    embedded_count += 1
+        return embedded_count
+    
+    @staticmethod
+    def read_provenance_from_png(png_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
+        """
+        Read provenance metadata from a PNG file.
+        
+        Args:
+            png_path: Path to PNG file
+        
+        Returns:
+            Provenance dictionary if found, None if not available or no metadata
+        """
+        if not PIL_AVAILABLE:
+            print("PIL/Pillow not available - cannot read PNG metadata")
+            return None
+        
+        png_path = Path(png_path)
+        if not png_path.exists():
+            print(f"PNG file not found: {png_path}")
+            return None
+        
+        try:
+            img = Image.open(png_path)
+            
+            # Try to get provenance from PNG text chunks
+            if hasattr(img, 'text') and 'provenance' in img.text:
+                return json.loads(img.text['provenance'])
+            elif hasattr(img, 'info') and 'provenance' in img.info:
+                return json.loads(img.info['provenance'])
+            else:
+                print(f"No provenance metadata found in: {png_path.name}")
+                return None
+                
+        except Exception as e:
+            print(f"Error reading PNG metadata: {e}")
+            return None
     
     @staticmethod
     def _hash_file(file_path: Path) -> str:

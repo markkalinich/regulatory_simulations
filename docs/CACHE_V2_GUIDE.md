@@ -14,6 +14,7 @@ Cache V2 uses LM Studio's `path` field as the model identifier. This path includ
 | Field | Source |
 |-------|--------|
 | `model_path` | LM Studio `path` field |
+| `quantization_name` | LM Studio quantization (e.g., Q8_0, Q4_K_M) |
 | `prompt_hash` | MD5 of prompt content (before model-specific modifications) |
 | `input_hash` | MD5 of input text |
 | `temperature` | API parameter |
@@ -22,6 +23,8 @@ Cache V2 uses LM Studio's `path` field as the model identifier. This path includ
 | `context_length` | API parameter |
 
 Metadata stored but NOT part of cache key: `hostname`, `prompt_suffix_applied`, `execution_context`.
+
+**Note (Jan 2026)**: `quantization_name` was added to the cache key to prevent Q4/Q8 collisions for multi-quant folders. Existing cache entries will not match new lookups - new results will be stored with new cache IDs.
 
 ## Database Location
 
@@ -121,3 +124,11 @@ Issues encountered during development:
 3. Python logging outputs to stderr. Captured by `2>&1` in bash.
 
 4. LM Studio `modelKey` ≠ `path`. Cache uses `path`.
+
+## Resolved Issues
+
+**Multi-variant quantization collision (FIXED Jan 2026)**: For models with multiple quantizations in one folder (e.g., `qwen/qwen3-14b` with both Q4 and Q8), LM Studio returns a short path without the `.gguf` filename. Previously, Q4 and Q8 runs for the same model would share/overwrite cache entries.
+
+**Solution**: Added `quantization_name` to `CacheKeyV2.get_cache_id()` components. Now Q4 and Q8 results are stored separately.
+
+**Impact**: Existing cache entries (stored without quantization in the key) will not match new lookups. Results will be re-run and stored with new cache IDs that include quantization.

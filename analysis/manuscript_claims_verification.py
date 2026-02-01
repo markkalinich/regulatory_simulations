@@ -272,7 +272,7 @@ def verify_section3_p1_p2(output: list, claims: dict, paper_run_dir: Path) -> li
     section_claims = claims['section_3_p1_p2_estimates']['claims']
     
     # Load P1/P2 data
-    p1p2_csv = paper_run_dir / "Data" / "processed_data" / "p1_p2_p_harm_values_m_1.0.csv"
+    p1p2_csv = paper_run_dir / "Data" / "processed_data" / "correlated_failure_analysis" / "p1_p2_p_harm_values_m_1.0.csv"
     
     if not p1p2_csv.exists():
         output.append("❌ ERROR: P1/P2 values CSV not found")
@@ -344,7 +344,7 @@ def verify_section3_p1_p2(output: list, claims: dict, paper_run_dir: Path) -> li
     
     # P2 convergence at high m
     claim = section_claims['p2_strong_dependence_convergence']
-    high_m_csv = paper_run_dir / "Data" / "processed_data" / f"p1_p2_p_harm_values_m_{float(claim['m_value'])}.csv"
+    high_m_csv = paper_run_dir / "Data" / "processed_data" / "correlated_failure_analysis" / f"p1_p2_p_harm_values_m_{float(claim['m_value'])}.csv"
     
     if high_m_csv.exists():
         high_m_df = pd.read_csv(high_m_csv)
@@ -358,16 +358,6 @@ def verify_section3_p1_p2(output: list, claims: dict, paper_run_dir: Path) -> li
     else:
         output.append(f"⚠️ SKIPPED: High-m P2 CSV not found ({high_m_csv.name})")
     output.append("")
-    
-    # Check for removed claims
-    if '_removed_claims' in claims:
-        output.append("## Removed Claims (v2 revision)\n")
-        for claim_id, claim_info in claims['_removed_claims'].items():
-            if claim_id == 'description':
-                continue
-            output.append(f"ℹ️ REMOVED: {claim_info.get('original_claim', claim_id)}")
-            output.append(f"  Reason: {claim_info.get('reason', 'N/A')}")
-            output.append("")
     
     return output
 
@@ -398,7 +388,7 @@ def verify_claims(paper_run_dir: Path) -> str:
 def main():
     parser = argparse.ArgumentParser(description="Verify manuscript claims against pipeline output")
     parser.add_argument("--paper-run-dir", required=True, help="Path to pipeline output directory")
-    parser.add_argument("--output", default="MANUSCRIPT_CLAIMS_VERIFICATION.md", help="Output filename")
+    parser.add_argument("--output", default="manuscript_claims_verification.md", help="Output filename")
     parser.add_argument("--claims-file", default=None, help="Path to claims JSON (default: config/manuscript_claims.json)")
     args = parser.parse_args()
     

@@ -15,13 +15,12 @@ Usage:
         --experiment-dir <path_to_experiment_dir> \\
         --task-type suicidal_ideation \\
         --output-dir <output_path>
-
-Author: Mark Kalinich
 """
 
 import argparse
 import sys
 from pathlib import Path
+from typing import Optional
 import pandas as pd
 
 # Add project root to path
@@ -70,7 +69,7 @@ TASK_CONFIGS = {
 }
 
 
-def load_experiment_results(experiment_dir: Path, models_config: str = None) -> pd.DataFrame:
+def load_experiment_results(experiment_dir: Path, models_config: Optional[str] = None) -> pd.DataFrame:
     """
     Load model outputs from an experiment directory.
     
@@ -187,8 +186,8 @@ def generate_confusion_matrix_figure(
     experiment_dir: Path,
     task_type: str,
     output_dir: Path,
-    models_config: str = None,
-) -> Path:
+    models_config: Optional[str] = None,
+) -> Optional[Path]:
     """
     Generate binary confusion matrix grid for a task.
     

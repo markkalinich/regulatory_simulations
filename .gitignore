@@ -4,7 +4,10 @@ analysis.log
 *.bin
 # Cache database files
 cache/*.db
+cache/*.sqlite
 cache_mac/*.db
+cache_v3*.db
+*_backup_*.db
 # Config files
 configs/
 .coverage
@@ -41,6 +44,8 @@ results/model_comparisons/
 results/*.png
 !results/README.md
 results/visualizations/
+results_*_backup_*/
+analysis/results/
 *.safetensors
 *.swo
 *.swp

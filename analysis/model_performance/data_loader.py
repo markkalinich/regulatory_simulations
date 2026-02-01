@@ -164,7 +164,7 @@ def load_experiment_results(input_data_path: str, prompt_file_path: str,
     print(f"Using cache V{cache_version} at {cache_dir}")
     
     if cache_version == 2:
-        cache = ResultCacheV2(cache_dir)
+        cache = ResultCacheV2(cache_dir, read_only=True)  # Read-only: don't modify database during analysis
     else:
         cache = ResultCache(cache_dir)
     

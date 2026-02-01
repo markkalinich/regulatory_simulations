@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Expert Review Sankey Diagram Generator with Configurations
-Consolidated generator and configs for all experiment types.
+Sankey Diagram Generator with Configurations for psychiatrist review of 
+synthetic data.
 
-Author: Mark Kalinich
-Date: October 26, 2025
 """
 
 import sys
@@ -39,6 +37,9 @@ class SankeyConfig:
     
     # Column names
     category_column: str  # 'Safety type', 'Counseling Request', 'SubCategory'
+    
+    # Optional fields with defaults
+    manifest_path: Optional[Path] = None  # Selection manifest for ground truth matching
     id_column: Optional[str] = None  # For therapy_engagement (Example_ID)
     
     # Categories & labels
@@ -47,8 +48,6 @@ class SankeyConfig:
     
     # Review workflow
     has_p2_review: bool = True  # False for therapy_engagement (not yet)
-    has_modification_edits: bool = False  # True for therapy_engagement
-    edit_status_column: Optional[str] = None  # For therapy_engagement
     
     # Node colors (RGBA strings)
     category_color_map: Dict[str, str] = field(default_factory=dict)
@@ -68,8 +67,8 @@ class SankeyConfig:
             }
 
 
-class ExpertReviewSankeyGenerator:
-    """Generate expert review Sankey diagrams for any dataset."""
+class PsychiatristReviewSankeyGenerator:
+    """Generate psychiatrist review Sankey diagrams for any dataset."""
     
     def __init__(self, config: SankeyConfig, project_root: Path):
         self.config = config
@@ -130,7 +129,7 @@ class ExpertReviewSankeyGenerator:
         
         return raw_data, review_data, final_data
     
-    def prepare_review_data(self, review_data: pd.DataFrame, raw_data: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    def prepare_review_data(self, review_data: pd.DataFrame) -> pd.DataFrame:
         """Add P1/P2 action columns."""
         print("\nPreparing review data...")
         
@@ -235,8 +234,7 @@ class ExpertReviewSankeyGenerator:
             cat_data = review_data[review_data[self.config.category_column] == category]
             
             for p1_action in ['Kept', 'Modified', 'Removed']:
-                action_col = 'P1_Action_Detail' if self.config.has_modification_edits else 'P1_Action'
-                count = len(cat_data[cat_data[action_col] == p1_action])
+                count = len(cat_data[cat_data['P1_Action'] == p1_action])
                 if count > 0:
                     flows.append({
                         'source': self.config.category_labels[category],
@@ -258,51 +256,63 @@ class ExpertReviewSankeyGenerator:
                         })
             
             # P2 Kept/Modified → Final + Not Used
-            p2_approved_count = len(review_data[
+            # Use manifest for ground truth matching instead of proportional allocation
+            p2_approved = review_data[
                 (review_data['P1_Action'].isin(['Kept', 'Modified'])) &
                 (review_data['P2_Action'].isin(['Kept', 'Modified']))
-            ])
-            not_used_total = p2_approved_count - actual_final_size
+            ].copy()
             
-            # Get counts for each P2 action
             p2_kept_total = len(review_data[review_data['P2_Action'] == 'Kept'])
             p2_modified_total = len(review_data[review_data['P2_Action'] == 'Modified'])
             
-            # If there's downsampling, distribute Not Used proportionally
-            if not_used_total > 0:
-                # Proportional allocation of Not Used using round() for better accuracy
-                kept_ratio = p2_kept_total / p2_approved_count
-                p2_kept_not_used = round(not_used_total * kept_ratio)
+            # Load manifest and determine which P2-approved items made it to final
+            if self.config.manifest_path and self.config.manifest_path.exists():
+                manifest = pd.read_csv(self.config.manifest_path)
+                selected = manifest[manifest['selected_for_finalized'] == True]
                 
-                # Ensure total Not Used = not_used_total (adjust for any rounding error)
-                p2_modified_not_used = not_used_total - p2_kept_not_used
+                # Join based on experiment type
+                if self.config.experiment_type == 'therapy_engagement':
+                    # Join on Example_ID
+                    selected_ids = set(selected['Example_ID'].tolist())
+                    p2_approved['in_final'] = p2_approved['Example_ID'].isin(selected_ids)
+                else:
+                    # Join on final_statement
+                    selected_statements = set(selected['final_statement'].tolist())
+                    p2_approved['in_final'] = p2_approved['final_statement'].isin(selected_statements)
                 
-                # Calculate flows to Final
-                p2_kept_to_final = p2_kept_total - p2_kept_not_used
-                p2_modified_to_final = p2_modified_total - p2_modified_not_used
-                
-                # P2: Kept flows
-                if p2_kept_to_final > 0:
-                    flows.append({'source': 'P2: Kept', 'target': 'Final', 'value': p2_kept_to_final})
-                if p2_kept_not_used > 0:
-                    flows.append({'source': 'P2: Kept', 'target': 'Not Used', 'value': p2_kept_not_used})
-                
-                # P2: Modified flows
-                if p2_modified_to_final > 0:
-                    flows.append({'source': 'P2: Modified', 'target': 'Final', 'value': p2_modified_to_final})
-                if p2_modified_not_used > 0:
-                    flows.append({'source': 'P2: Modified', 'target': 'Not Used', 'value': p2_modified_not_used})
+                # Calculate ground truth flows
+                p2_kept_to_final = len(p2_approved[(p2_approved['P2_Action'] == 'Kept') & (p2_approved['in_final'])])
+                p2_kept_not_used = len(p2_approved[(p2_approved['P2_Action'] == 'Kept') & (~p2_approved['in_final'])])
+                p2_modified_to_final = len(p2_approved[(p2_approved['P2_Action'] == 'Modified') & (p2_approved['in_final'])])
+                p2_modified_not_used = len(p2_approved[(p2_approved['P2_Action'] == 'Modified') & (~p2_approved['in_final'])])
             else:
-                # No downsampling - all P2 approved items go to Final
-                if p2_kept_total > 0:
-                    flows.append({'source': 'P2: Kept', 'target': 'Final', 'value': p2_kept_total})
-                if p2_modified_total > 0:
-                    flows.append({'source': 'P2: Modified', 'target': 'Final', 'value': p2_modified_total})
+                # Fallback to proportional allocation if no manifest
+                not_used_total = len(p2_approved) - actual_final_size
+                if not_used_total > 0 and len(p2_approved) > 0:
+                    kept_ratio = p2_kept_total / len(p2_approved)
+                    p2_kept_not_used = round(not_used_total * kept_ratio)
+                    p2_modified_not_used = not_used_total - p2_kept_not_used
+                    p2_kept_to_final = p2_kept_total - p2_kept_not_used
+                    p2_modified_to_final = p2_modified_total - p2_modified_not_used
+                else:
+                    p2_kept_to_final = p2_kept_total
+                    p2_modified_to_final = p2_modified_total
+                    p2_kept_not_used = 0
+                    p2_modified_not_used = 0
+            
+            # Add flows
+            if p2_kept_to_final > 0:
+                flows.append({'source': 'P2: Kept', 'target': 'Final', 'value': p2_kept_to_final})
+            if p2_kept_not_used > 0:
+                flows.append({'source': 'P2: Kept', 'target': 'Not Used', 'value': p2_kept_not_used})
+            if p2_modified_to_final > 0:
+                flows.append({'source': 'P2: Modified', 'target': 'Final', 'value': p2_modified_to_final})
+            if p2_modified_not_used > 0:
+                flows.append({'source': 'P2: Modified', 'target': 'Not Used', 'value': p2_modified_not_used})
         else:
             # No P2 review - some P1:Kept items are downsampled to Not Used
-            action_col = 'P1_Action_Detail' if self.config.has_modification_edits else 'P1_Action'
-            p1_kept_count = len(review_data[review_data[action_col] == 'Kept'])
-            p1_modified_count = len(review_data[review_data[action_col] == 'Modified'])
+            p1_kept_count = len(review_data[review_data['P1_Action'] == 'Kept'])
+            p1_modified_count = len(review_data[review_data['P1_Action'] == 'Modified'])
             
             # Calculate how many from P1:Kept go to Not Used vs P1 Approved
             total_approved = p1_kept_count + p1_modified_count
@@ -444,11 +454,11 @@ class ExpertReviewSankeyGenerator:
         # Set title based on experiment type
         title_map = {
             'si': 'Suicidal Ideation',
-            'therapy_request': 'Therapy Request Expert Review Flow',
-            'therapy_engagement': 'Therapy Engagement Expert Review Flow'
+            'therapy_request': 'Therapy Request',
+            'therapy_engagement': 'Therapy Engagement'
         }
         title = title_map.get(self.config.experiment_type, 
-                              f"{self.config.experiment_type.replace('_', ' ').title()} Expert Review Flow")
+                              f"{self.config.experiment_type.replace('_', ' ').title()} Psychiatrist Review Flow")
         
         fig.update_layout(
             title=title,
@@ -473,17 +483,12 @@ class ExpertReviewSankeyGenerator:
     def generate(self):
         """Main generation workflow."""
         print("="*80)
-        print(f"{self.config.experiment_type.replace('_', ' ').upper()} EXPERT REVIEW SANKEY DIAGRAM")
+        print(f"{self.config.experiment_type.replace('_', ' ').upper()} PSYCHIATRIST REVIEW SANKEY DIAGRAM")
         print("="*80)
         
         # Execute workflow
         raw_data, review_data, final_data = self.load_data()
-        
-        # Pass raw_data for therapy_engagement
-        if self.config.has_modification_edits:
-            review_data = self.prepare_review_data(review_data, raw_data)
-        else:
-            review_data = self.prepare_review_data(review_data)
+        review_data = self.prepare_review_data(review_data)
         
         # Calculate actual final dataset size from the data
         if self.config.id_column:
@@ -518,13 +523,14 @@ COLORS = {
 }
 
 # Helper to build config with common defaults
-def _config(exp_type, prefix, raw_file, review_file, final_file, cat_col, cat_order, cat_labels, 
+def _config(exp_type, prefix, raw_file, review_file, final_file, manifest_file, cat_col, cat_order, cat_labels, 
             color_map, notes, id_col=None):
     return SankeyConfig(
-        experiment_type=exp_type, figure_name=f'{exp_type}_expert_review_sankey', prefix=prefix,
+        experiment_type=exp_type, figure_name=f'{exp_type}_psychiatrist_review_sankey', prefix=prefix,
         raw_data_path=PROJECT_ROOT / f'data/inputs/raw_model_results/{raw_file}',
         review_data_path=PROJECT_ROOT / f'data/inputs/intermediate_files/{review_file}',
         final_data_path=PROJECT_ROOT / f'data/inputs/finalized_input_data/{final_file}',
+        manifest_path=PROJECT_ROOT / f'data/inputs/manifests/{manifest_file}',
         category_column=cat_col, id_column=id_col, category_order=cat_order, 
         category_labels=cat_labels, category_color_map=color_map,
         has_p2_review=True, downsampling_note=notes
@@ -536,6 +542,7 @@ SI_CONFIG = _config(
     'SI_balanced_100_per_category_ordered_input.csv',
     'SI_psychiatrist_01_and_02_scores.csv',
     'SI_finalized_sentences.csv',
+    'SI_finalized_selection_manifest.csv',
     'Safety type',
     ['clearly_happy', 'clearly_neutral', 'clearly_sad', 'clearly_angry', 'ambiguous_emotional',
      'passive_si', 'active_si_abstract', 'active_si_plan_no_intent', 'active_si_plan_with_intent', 'preparatory_si'],
@@ -553,6 +560,7 @@ THERAPY_REQUEST_CONFIG = _config(
     'therapy_request_100_per_category_reformatted.csv',
     'therapy_request_psychiatrist_01_and_02_scores.csv',
     'therapy_request_finalized_sentences.csv',
+    'therapy_request_finalized_selection_manifest.csv',
     'Counseling Request',
     ['Neutral Declarative Statements', 'Neutral Non-Therapeutic Questions', 'Neutral Explicit Requests for Therapy',
      'Affect-Containing Declarative Statements - Clearly Happy', 'Affect-Containing Declarative Statements - Clearly Sad',
@@ -571,6 +579,7 @@ THERAPY_ENGAGEMENT_CONFIG = _config(
     'therapy_engagement_conversations_downsampled_150.csv',
     'therapy_engagement_psychiatrist_01_and_02_scores.csv',
     'therapy_engagement_finalized_sentences.csv',
+    'therapy_engagement_finalized_selection_manifest.csv',
     'SubCategory',
     ['NonTherapeutic_CreativeWriting', 'NonTherapeutic_InfoSeeking', 'NonTherapeutic_PlanningOrg',
      'NonTherapeutic_PracticalTask', 'NonTherapeutic_TechnicalCoding', 'Ambiguous_DisclosureBoundary',
@@ -611,11 +620,11 @@ if __name__ == '__main__':
         # Default to SI if no argument provided
         print("No experiment type specified. Running all three...")
         for config in [SI_CONFIG, THERAPY_REQUEST_CONFIG, THERAPY_ENGAGEMENT_CONFIG]:
-            generator = ExpertReviewSankeyGenerator(config, PROJECT_ROOT)
+            generator = PsychiatristReviewSankeyGenerator(config, PROJECT_ROOT)
             generator.generate()
             print("\n" + "="*80 + "\n")
         sys.exit(0)
     
     # Run the specified config
-    generator = ExpertReviewSankeyGenerator(config, PROJECT_ROOT)
+    generator = PsychiatristReviewSankeyGenerator(config, PROJECT_ROOT)
     generator.generate()

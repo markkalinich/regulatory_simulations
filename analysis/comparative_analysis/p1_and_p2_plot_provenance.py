@@ -18,7 +18,7 @@ Models the conditional dependence of engagement detection failure on prior failu
 - m → ∞: FNR → 1, representing certain failure given prior failures.
 
 For small FNR values, this approximates multiplicative scaling: m=2 ≈ 2× FNR.
-For larger FNR, the transformation gracefully saturates toward 1.0.
+For larger FNR, the transformation approaches 1.0 (certain failure).
 
 P2 presupposes we are IN the hazardous situation, so P(therapeutic) = 1.
 P2 = FNR_adjusted × P(fail help) × P(lack care → harm)
@@ -26,7 +26,6 @@ P2 = FNR_adjusted × P(fail help) × P(lack care → harm)
 Where P(lack care → harm) is varied on the x-axis (analogous to SI% for P1).
 P_harm = P1 × P2
 
-(WITH PROVENANCE TRACKING)
 """
 
 import pandas as pd
@@ -48,9 +47,6 @@ from config.regulatory_paper_parameters import RISK_MODEL_PARAMS
 # =============================================================================
 # CONFIGURABLE PARAMETERS (imported from centralized config)
 # =============================================================================
-# Build EMPIRICAL_DATA from centralized config
-# Source: Anthropic (2025) "How people use Claude for support, advice, and companionship"
-# See config/regulatory_paper_parameters.py for full documentation
 EMPIRICAL_DATA = {
     'therapy_request': {
         'k': RISK_MODEL_PARAMS['empirical_therapy_request_k'],
@@ -73,13 +69,13 @@ DEFAULT_PARAMS = {
     # Monte Carlo error propagation settings
     'n_mc_samples': RISK_MODEL_PARAMS['n_mc_samples'],
     'prior_alpha': RISK_MODEL_PARAMS['prior_alpha'],
+    'random_state': None,            # For reproducibility (None = non-deterministic)
     'uncertainty_style': 'both',     # Plotting decision - kept local
     'sample_params': RISK_MODEL_PARAMS['mc_sample_empirical_rates'],  # Legacy name for backward compat
 }
 
 # Limit of Detection CI level (can be overridden via command line)
 LOD_CI_LEVEL = DEFAULT_PARAMS['lod_ci_level']
-
 
 def calculate_lod(n_samples, ci_level=LOD_CI_LEVEL):
     """
@@ -164,7 +160,7 @@ def get_sample_size_from_metrics(metrics):
     return first_model['total_positive']
 
 
-def sample_fnr_from_posterior(fn, total_positive, n_samples, prior_alpha=1.0):
+def sample_fnr_from_posterior(fn, total_positive, n_samples, prior_alpha=1.0, random_state=None):
     """
     Sample FNR from Beta posterior distribution.
     
@@ -177,18 +173,30 @@ def sample_fnr_from_posterior(fn, total_positive, n_samples, prior_alpha=1.0):
         total_positive: Total positive test cases (n)
         n_samples: Number of MC samples to draw
         prior_alpha: Prior parameter (1.0 = uniform, 0.5 = Jeffreys)
+        random_state: Random seed for reproducibility
     
     Returns:
         Array of n_samples FNR values sampled from posterior
+    
+    Raises:
+        ValueError: If inputs are invalid (fn < 0, fn > total_positive, total_positive <= 0)
     """
+    # Validate inputs
+    if total_positive <= 0:
+        raise ValueError(f"total_positive must be > 0, got {total_positive}")
+    if fn < 0:
+        raise ValueError(f"fn (false negatives) must be >= 0, got {fn}")
+    if fn > total_positive:
+        raise ValueError(f"fn ({fn}) cannot exceed total_positive ({total_positive})")
+    
     tp = total_positive - fn  # true positives = n - k
     alpha_posterior = prior_alpha + fn          # alpha + k (failures)
     beta_posterior = prior_alpha + tp           # alpha + (n - k) (successes)
-    return stats.beta.rvs(alpha_posterior, beta_posterior, size=n_samples)
+    return stats.beta.rvs(alpha_posterior, beta_posterior, size=n_samples, random_state=random_state)
 
 
 def monte_carlo_risk_estimation(si_metrics, therapy_request_metrics, therapy_engagement_metrics,
-                                 baseline_pct, params):
+                                 si_prevalence_pct, harm_given_no_care_pct, params):
     """
     Estimate P1, P2, P_harm with uncertainty via Monte Carlo sampling.
     
@@ -200,12 +208,19 @@ def monte_carlo_risk_estimation(si_metrics, therapy_request_metrics, therapy_eng
         si_metrics: Dict with 'fn', 'total_positive' for SI detection
         therapy_request_metrics: Dict with 'fn', 'total_positive' for therapy request
         therapy_engagement_metrics: Dict with 'fn', 'total_positive' for therapy engagement
-        baseline_pct: Baseline percentage (SI% for P1, P(lack care→harm)% for P2)
+        si_prevalence_pct: Baseline SI prevalence percentage (x-axis for P1)
+        harm_given_no_care_pct: P(lack of care leads to harm) percentage (x-axis for P2)
         params: Analysis parameters dict
     
     Returns:
         Dict with 'p1', 'p2', 'p_harm' each containing 'median', 'ci_5', 'ci_95'
     """
+    # Validate empirical data
+    for key in ['therapy_request', 'model_comply']:
+        d = EMPIRICAL_DATA[key]
+        if d['n'] <= 0 or d['k'] < 0 or d['k'] > d['n']:
+            raise ValueError(f"Invalid empirical data for {key}: k={d['k']}, n={d['n']}")
+    
     n_samples = params['n_mc_samples']
     prior_alpha = params['prior_alpha']
     failure_multiplier = params['failure_multiplier']
@@ -213,19 +228,19 @@ def monte_carlo_risk_estimation(si_metrics, therapy_request_metrics, therapy_eng
     
     # Sample FNRs from Beta posteriors
     si_fnr_samples = sample_fnr_from_posterior(
-        si_metrics['fn'], si_metrics['total_positive'], n_samples, prior_alpha)
+        si_metrics['fn'], si_metrics['total_positive'], n_samples, prior_alpha, params.get('random_state'))
     tr_fnr_samples = sample_fnr_from_posterior(
-        therapy_request_metrics['fn'], therapy_request_metrics['total_positive'], n_samples, prior_alpha)
+        therapy_request_metrics['fn'], therapy_request_metrics['total_positive'], n_samples, prior_alpha, params.get('random_state'))
     te_fnr_samples = sample_fnr_from_posterior(
-        therapy_engagement_metrics['fn'], therapy_engagement_metrics['total_positive'], n_samples, prior_alpha)
+        therapy_engagement_metrics['fn'], therapy_engagement_metrics['total_positive'], n_samples, prior_alpha, params.get('random_state'))
     
     # Sample assumed parameters from empirical posteriors (or use point estimates)
     if sample_params:
         d = EMPIRICAL_DATA['therapy_request']
-        therapy_rate_samples = stats.beta.rvs(prior_alpha + d['k'], prior_alpha + d['n'] - d['k'], size=n_samples)
+        therapy_rate_samples = stats.beta.rvs(prior_alpha + d['k'], prior_alpha + d['n'] - d['k'], size=n_samples, random_state=params.get('random_state'))
         
         d = EMPIRICAL_DATA['model_comply']
-        comply_rate_samples = stats.beta.rvs(prior_alpha + d['k'], prior_alpha + d['n'] - d['k'], size=n_samples)
+        comply_rate_samples = stats.beta.rvs(prior_alpha + d['k'], prior_alpha + d['n'] - d['k'], size=n_samples, random_state=params.get('random_state'))
         
         fail_help_samples = np.full(n_samples, params['prob_fail_seek_help'])  # No data, fixed
     else:
@@ -234,7 +249,7 @@ def monte_carlo_risk_estimation(si_metrics, therapy_request_metrics, therapy_eng
         fail_help_samples = np.full(n_samples, params['prob_fail_seek_help'])
     
     # Calculate P1 for each sample
-    p_suicidal = baseline_pct / 100.0
+    p_suicidal = si_prevalence_pct / 100.0
     p1_samples = (p_suicidal * 
                   si_fnr_samples * 
                   therapy_rate_samples * 
@@ -247,7 +262,7 @@ def monte_carlo_risk_estimation(si_metrics, therapy_request_metrics, therapy_eng
     sensitivity_samples = 1 - te_fnr_samples
     adjusted_sensitivity = sensitivity_samples ** failure_multiplier
     p_miss_therapeutic = 1 - adjusted_sensitivity
-    p_lack_care_harm = baseline_pct / 100.0
+    p_lack_care_harm = harm_given_no_care_pct / 100.0
     p2_samples = (p_miss_therapeutic * 
                   fail_help_samples * 
                   p_lack_care_harm)
@@ -293,8 +308,6 @@ def calculate_p1(si_percentage, suicide_fnr, therapy_request_fnr,
     
     p1 = p_suicidal * p_suicide_miss * p_therapy_request * p_therapy_miss * p_comply
     
-    if p1 == 0:
-        p1 = 1e-10
     return p1
 
 def calculate_p2(therapy_detection_fnr, prob_lack_care_harm_percentage,
@@ -325,8 +338,6 @@ def calculate_p2(therapy_detection_fnr, prob_lack_care_harm_percentage,
     
     p2 = p_miss_therapeutic * p_fail_help * p_lack_care_harm
     
-    if p2 == 0:
-        p2 = 1e-10
     return p2
 
 
@@ -348,8 +359,6 @@ def calculate_p_harm(p1, p2):
     """
     p_harm = p1 * p2
     
-    if p_harm == 0:
-        p_harm = 1e-10
     return p_harm
 
 def prepare_plot_data(suicide_metrics, therapy_request_metrics, therapy_engagement_metrics, 
@@ -420,7 +429,7 @@ def prepare_plot_data(suicide_metrics, therapy_request_metrics, therapy_engageme
             config_match = llama_families[llama_families['size'].str.startswith(base_size)]
         
         if len(config_match) > 0:
-            param_billions = config_match.iloc[0]['param_billions']
+            param_billions = float(config_match.iloc[0]['param_billions'])
         else:
             print(f"  Warning: No config found for {model_family}/{model_size}, skipping")
             continue
@@ -442,8 +451,9 @@ def prepare_plot_data(suicide_metrics, therapy_request_metrics, therapy_engageme
             
             if use_mc:
                 # Monte Carlo estimation with uncertainty
+                # Pass baseline_pct for both parameters (same x-axis value for visual comparison)
                 mc_results = monte_carlo_risk_estimation(
-                    si_m, tx_req_m, tx_eng_m, baseline_pct, params)
+                    si_m, tx_req_m, tx_eng_m, baseline_pct, baseline_pct, params)
                 
                 for risk_type in ['p1', 'p2', 'p_harm']:
                     plot_data.append({
@@ -581,6 +591,7 @@ def create_p1_p2_risk_plot(suicide_csv, therapy_request_csv, therapy_engagement_
     plot_data['normalized_family'] = plot_data['model_family'].apply(normalize_family)
     
     # Save computed P1/P2/P_harm values to CSV for reproducibility and verification
+    output_name_base = params.get('output_name', 'figure_5')
     csv_filename = f"p1_p2_p_harm_values_m_{failure_multiplier}.csv"
     csv_output_path = tracker.get_output_path(csv_filename)
     plot_data.to_csv(csv_output_path, index=False)
@@ -588,12 +599,23 @@ def create_p1_p2_risk_plot(suicide_csv, therapy_request_csv, therapy_engagement_
                            description="Computed P1, P2, P_harm values for all models and baseline percentages")
     print(f"  Saved computed values: {csv_filename}")
     
-    # Create 3×3 subplot grid: 3 rows (P1, P2, P_harm) × 3 columns (model families)
-    fig, axes = plt.subplots(3, 3, figsize=figsize, sharey='row')
+    # Determine number of rows based on include_p_harm parameter
+    include_p_harm = params.get('include_p_harm', False)
+    if include_p_harm:
+        n_rows = 3
+        risk_types = ['P1', 'P2', 'P_harm']
+        # Adjust figsize for 3 rows if using default 2-row size
+        if figsize == (20, 16):
+            figsize = (20, 24)
+    else:
+        n_rows = 2
+        risk_types = ['P1', 'P2']
+    
+    # Create subplot grid: n_rows × 3 columns (model families)
+    fig, axes = plt.subplots(n_rows, 3, figsize=figsize, sharey='row')
     family_colors = {'gemma': '#1f77b4', 'qwen': '#ff7f0e', 'llama': '#2ca02c'}
     family_display_names = {'gemma': 'Gemma', 'qwen': 'Qwen', 'llama': 'LLaMA'}
     
-    risk_types = ['P1', 'P2', 'P_harm']
     risk_labels = {
         'P1': 'P$_1$ (Hazard → Hazardous Situation)',
         'P2': 'P$_2$ (Hazardous Situation → Harm)',
@@ -719,13 +741,15 @@ def create_p1_p2_risk_plot(suicide_csv, therapy_request_csv, therapy_engagement_
         log_y_scale=log_y,
         figsize=figsize,
         model_families=['gemma', 'qwen', 'llama'],
-        risk_types=['P1', 'P2', 'P_harm']
+        risk_types=risk_types,
+        include_p_harm=include_p_harm
     )
     
     plt.tight_layout()
     
-    # Save outputs using provenance tracker (always include failure_multiplier in filename for consistency)
-    output_filename = f"p1_p2_p_harm_risk_analysis_m_{failure_multiplier}.png"
+    # Save outputs using provenance tracker
+    output_name = params.get('output_name', 'figure_5')
+    output_filename = f"{output_name}.png"
     
     output_png = tracker.get_output_path(output_filename)
     plt.savefig(str(output_png), dpi=300, bbox_inches='tight')
@@ -736,7 +760,10 @@ def create_p1_p2_risk_plot(suicide_csv, therapy_request_csv, therapy_engagement_
     # Save provenance metadata
     tracker.save_provenance()
     
-    print(f"✅ P1, P2, P_harm Risk Analysis plot saved with provenance tracking")
+    if include_p_harm:
+        print(f"✅ P1, P2, P_harm Risk Analysis plot saved with provenance tracking")
+    else:
+        print(f"✅ P1, P2 Risk Analysis plot saved with provenance tracking")
     print(f"   Failure multiplier m = {failure_multiplier}")
     print(f"   Output directory: {tracker.output_dir}")
 
@@ -748,8 +775,8 @@ def main():
                        help='Path to therapy request comprehensive_metrics.csv')
     parser.add_argument('--therapy-engagement-csv', required=True,
                        help='Path to therapy engagement comprehensive_metrics.csv')
-    parser.add_argument('--figsize', nargs=2, type=float, default=[20, 24],
-                       help='Figure size (width height). Default: 20 24 for 3-row layout')
+    parser.add_argument('--figsize', nargs=2, type=float, default=[20, 16],
+                       help='Figure size (width height). Default: 20 16 for 2-row layout, use 20 24 with --include-p-harm')
     parser.add_argument('--linear-y', action='store_true',
                        help='Use linear y-axis instead of logarithmic (default: logarithmic)')
     
@@ -792,6 +819,10 @@ def main():
                        help=f"How to display uncertainty: 'ribbon' (shaded area), "
                             f"'errorbar' (vertical bars), 'both', or 'none'. "
                             f"(default: {DEFAULT_PARAMS['uncertainty_style']})")
+    parser.add_argument('--include-p-harm', action='store_true',
+                       help="Include P_harm (3rd row) in the figure. Default: only P1 and P2 rows.")
+    parser.add_argument('--output-name', type=str, default='figure_5',
+                       help="Base name for output files (default: figure_5)")
     
     args = parser.parse_args()
     
@@ -805,10 +836,15 @@ def main():
         'n_mc_samples': args.n_mc_samples,
         'prior_alpha': args.prior_alpha,
         'uncertainty_style': args.uncertainty_style,
+        'include_p_harm': args.include_p_harm,
+        'output_name': args.output_name,
     }
     
     print("="*80)
-    print("P1, P2, AND P_HARM RISK ANALYSIS FACET PLOT")
+    if args.include_p_harm:
+        print("P1, P2, AND P_HARM RISK ANALYSIS FACET PLOT")
+    else:
+        print("P1 AND P2 RISK ANALYSIS FACET PLOT")
     print("(WITH PROVENANCE TRACKING)")
     print("="*80)
     print(f"Parameters:")

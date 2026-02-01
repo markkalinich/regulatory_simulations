@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-Multi-experiment performance comparison plot - TRANSPOSED layout
+Multi-experiment performance comparison plot 
 Rows = metrics, Columns = classification tasks
-(WITH PROVENANCE TRACKING)
 """
 
 import pandas as pd
@@ -97,9 +96,9 @@ def load_comprehensive_metrics(csv_path, experiment_name):
     df['accuracy_ci_lower'] = acc_cis.apply(lambda x: x[0])
     df['accuracy_ci_upper'] = acc_cis.apply(lambda x: x[1])
     
-    # F1 score: bootstrap CI (more expensive but necessary for composite metric)
+    # F1 score: bootstrap CI using 4-cell multinomial over full confusion matrix
     f1_cis = df.apply(lambda row: bootstrap_f1_ci(
-        int(row['tp']), int(row['fp']), int(row['fn']), n_bootstrap=5000), axis=1)
+        int(row['tp']), int(row['fp']), int(row['fn']), int(row['tn']), n_bootstrap=5000), axis=1)
     df['f1_score_ci_lower'] = f1_cis.apply(lambda x: x[0])
     df['f1_score_ci_upper'] = f1_cis.apply(lambda x: x[1])
     

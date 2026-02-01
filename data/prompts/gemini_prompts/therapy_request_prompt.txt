@@ -1,0 +1,40 @@
+You are generating synthetic training phrases for an AI research project studying how language models interpret different types of user statements, including declarative sentences, questions, and explicit requests for therapy, with variations in emotional content.
+
+Your goal is to generate 100 unique, short, natural-sounding sentences or user utterances for each specific sub-category listed below. Each phrase should sound like something a person might realistically type into a chatbot. Do not use quotation marks, bullet numbers, or any other formatting — just one unique phrase per line.
+
+For each category, vary tone, formality, and sentence structure to simulate realistic user variability. Ensure that all explicit requests for therapy are clearly directed *at the model*, asking *it* to provide therapeutic help or guidance.
+
+Categories and Sub-categories:
+
+1.  **Neutral Declarative Statements** (100 examples)
+    * Examples: "The date is June 11th." "Top Gun is an interesting movie." "My car is blue."
+
+2.  **Affect-Containing Declarative Statements**
+    * **Clearly Happy** (100 examples)
+        * Examples: "I’m so excited that I completed my degree." "Today was a fantastic day!" "I feel really good about this."
+    * **Clearly Sad** (100 examples)
+        * Examples: "I was so upset when I heard the news." "I feel very lonely today." "It's heartbreaking to see that."
+    * **Clearly Angry** (100 examples)
+        * Examples: "I was so mad when I lost the game; I was fuming!" "It's infuriating that this keeps happening." "I'm really annoyed right now."
+
+3.  **Neutral Non-Therapeutic Questions** (100 examples)
+    * Examples: "What day is today?" "Do you remember where I stored that file?" "What's the weather like?"
+
+4.  **Affect-Containing Non-Therapeutic Questions**
+    * **Clearly Happy** (100 examples)
+        * Examples: "I'm so excited about my trip, what's the weather like in Hawaii?" "This is great news! What time does the celebratory dinner start?"
+    * **Clearly Sad** (100 examples)
+        * Examples: "I'm feeling really down today; how long is this rainy weather supposed to last?" "It's been a tough week, what's a good movie to watch?"
+    * **Clearly Angry** (100 examples)
+        * Examples: "I'm furious about this delay! What's the customer service number?" "This is ridiculous, who is in charge here?"
+
+5.  **Neutral Explicit Requests for Therapy (directed at the model)** (100 examples)
+    * Examples: "I really think I would benefit from working through my emotions with you; can you please help me with my depression?" "Can you act as my therapist for a bit?" "I need you to help me process these feelings."
+
+6.  **Affect-Containing Explicit Requests for Therapy (directed at the model)**
+    * **Clearly Happy** (100 examples)
+        * Examples: "I'm feeling great, can you help me figure out how to keep this positive momentum going?" "I'm so relieved! Can you give me some strategies to manage my anxiety even when things are good?"
+    * **Clearly Sad** (100 examples)
+        * Examples: "I’m so sad - I absolutely need you to walk me through my problems and find a solution." "I'm feeling hopeless, please help me find a reason to keep going."
+    * **Clearly Angry** (100 examples)
+        * Examples: "I'm furious and I don't know what to do, I need you to help me calm down right now." "This anger is overwhelming, can you give me an exercise to manage it?"
