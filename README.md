@@ -113,10 +113,8 @@ flowchart TB
 ```
 
 **Documentation:**
-- [Cache V2 Guide](docs/CACHE_V2_GUIDE.md) - Cache structure and usage
-- [Manuscript Verification Guide](docs/MANUSCRIPT_VERIFICATION_GUIDE.md) - Automated claims verification system
-- [Architecture Review](docs/REGULATORY_PAPER_ARCHITECTURE_REVIEW.md) - Two-phase architecture, parameter centralization
-- [Naming Conventions](docs/NAMING_CONVENTIONS.md) - File and variable naming standards
+- [Cache V3 Guide](docs/cache_v3_guide.md) - Cache structure and usage
+- [Naming Conventions](docs/naming_conventions.md) - File and variable naming standards
 
 ## Figure Guide
 
@@ -194,9 +192,9 @@ Model predictions are stored in `regulatory_paper_cache_v3/results.db`. The pipe
 `config/regulatory_paper_models.csv` specifies which models are included:
 
 ```csv
-model_family,model_size,enabled
-gemma,270m-it,True
-gemma,1b-it,True
+family,size,version,lm_studio_id,...,enabled
+gemma,270m-it,3.0,google.gemma-3-270m-it,...,True
+gemma,1b-it,3.0,google.gemma-3-1b-it,...,True
 ...
 ```
 
@@ -230,35 +228,33 @@ Where `FNR_adjusted = 1 - (1 - FNR_observed)^m` and `m` is the failure multiplie
 The failure multiplier models conditional dependence between detection failures:
 - `m = 1`: Independent failures
 - `m > 1`: Prior failures increase subsequent failure probability
-- Default values: [1, 2, 5, 10, 20, 100, 1000, 10000, 100000]
+- Default values: [1, 2, 5, 10, 100, 1000, 10000, 100000]
 
 ## Re-running Experiments
 
-If you need to regenerate model predictions (rather than using cached results):
+The main pipeline script reads from cached model predictions by default. To regenerate predictions:
 
 ### Prerequisites
 - LM Studio running at `http://localhost:1234`
 - Models downloaded and available in LM Studio
 
-### Run Experiments
+### Pipeline Options
 
 ```bash
-# All three tasks
-bash bash_scripts/run_experiments.sh \
-    data/inputs/finalized_input_data/SI_finalized_sentences.csv \
-    data/prompts/system_suicide_detection_v2.txt \
-    SI
+# Standard run (uses cached predictions)
+python run_regulatory_simulation_paper_pipeline.py
 
-bash bash_scripts/run_experiments.sh \
-    data/inputs/finalized_input_data/therapy_request_finalized_sentences.csv \
-    data/prompts/therapy_request_classifier_v3.txt \
-    TR
+# Specify alternate cache directory
+python run_regulatory_simulation_paper_pipeline.py --cache-dir path/to/cache
 
-bash bash_scripts/run_experiments.sh \
-    data/inputs/finalized_input_data/therapy_engagement_finalized_sentences.csv \
-    data/prompts/therapy_engagement_conversation_prompt_v2.txt \
-    TE
+# Override experiment directories with pre-computed results
+python run_regulatory_simulation_paper_pipeline.py \
+    --si-experiment-dir path/to/si_results \
+    --tr-experiment-dir path/to/tr_results \
+    --te-experiment-dir path/to/te_results
 ```
+
+The pipeline uses `orchestration/run_experiment.py` internally to query models via LM Studio when cache misses occur.
 
 ## Verification
 
@@ -273,12 +269,10 @@ The pipeline recalculates/rechecks key claims:
 
 **Output**: `Logs/manuscript_claims_verification.md`, `Logs/Audits/`, `Logs/figure_provenance/`
 
-**See**: [Manuscript Verification Guide](docs/MANUSCRIPT_VERIFICATION_GUIDE.md)
-
 ## Repository Structure
 
 ```
-safety_simulations/
+regulatory_simulations/
 ├── run_regulatory_simulation_paper_pipeline.py  # Main pipeline script
 ├── config/
 │   ├── regulatory_paper_models.csv              # Model selection

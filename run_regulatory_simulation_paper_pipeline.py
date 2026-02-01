@@ -1667,8 +1667,8 @@ def main():
     parser.add_argument(
         "--cache-dir",
         type=str,
-        default="cache",
-        help="Cache directory (default: cache). Use cache_v2 for V2 cache."
+        default="regulatory_paper_cache_v3",
+        help="Cache directory (default: regulatory_paper_cache_v3)"
     )
     
     args = parser.parse_args()
