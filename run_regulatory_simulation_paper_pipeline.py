@@ -1483,6 +1483,33 @@ def run_pipeline(args: argparse.Namespace) -> int:
         logger.warning("  ⚠ Some figures missing embedded provenance (non-critical)")
         # Don't fail pipeline for missing provenance
     
+    # Generate review statistics (required for manuscript claims verification)
+    log_section(logger, "GENERATING REVIEW STATISTICS")
+    
+    if not args.dry_run:
+        logger.info("  Generating psychiatrist review statistics...")
+        
+        # Generate review statistics (si, therapy_request, therapy_engagement)
+        review_stats_script = ROOT / "analysis" / "statistics" / "generate_review_statistics.py"
+        review_stats_success = run_python_script(review_stats_script, [], logger, dry_run=args.dry_run)
+        
+        if review_stats_success:
+            logger.info(f"  ✓ Review statistics generated")
+            
+            # Generate chi-squared tests (depends on review statistics)
+            logger.info("  Generating chi-squared tests...")
+            chi_sq_script = ROOT / "analysis" / "statistics" / "calculate_review_statistics.py"
+            chi_sq_success = run_python_script(chi_sq_script, [], logger, dry_run=args.dry_run)
+            
+            if chi_sq_success:
+                logger.info(f"  ✓ Chi-squared tests generated")
+            else:
+                logger.warning(f"  ⚠ Chi-squared tests generation failed")
+        else:
+            logger.warning(f"  ⚠ Review statistics generation failed")
+    else:
+        logger.info(f"  [DRY RUN] Would generate review statistics and chi-squared tests")
+    
     # Generate manuscript claims verification report
     log_section(logger, "GENERATING MANUSCRIPT CLAIMS VERIFICATION")
     

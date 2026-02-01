@@ -23,14 +23,14 @@
         "context": "SI content retention, significantly lower"
       },
       "non_therapeutic_tr_retained": {
-        "value": "777/800",
-        "numerator": 777,
+        "value": "768/800",
+        "numerator": 768,
         "denominator": 800,
         "context": "Non-therapeutic statements retained (therapy request task)"
       },
       "explicit_therapy_requests_retained": {
-        "value": "342/400",
-        "numerator": 342,
+        "value": "340/400",
+        "numerator": 340,
         "denominator": 400,
         "p_value_threshold": 0.001,
         "context": "Explicit therapy requests retained"
@@ -66,14 +66,13 @@
     "description": "Difficult statements missed by >50% of models",
     "claims": {
       "si_difficult_statements": {
-        "count": 21,
-        "percentage": 4.7,
+        "count": 19,
+        "percentage": 4.2,
         "total_models": 14,
         "breakdown": {
           "active_si_plan_with_intent_prep": 7,
           "active_si_plan_no_intent": 4,
-          "passive_si": 4,
-          "active_si_no_plan": 1,
+          "passive_si": 3,
           "ambiguous_emotional": 5
         },
         "figure": "S8",
@@ -90,11 +89,11 @@
         "context": "Therapy request statements missed by >50% of models"
       },
       "te_difficult_conversations": {
-        "count": 5,
-        "percentage": 1.2,
+        "count": 7,
+        "percentage": 1.7,
         "breakdown": {
-          "clear_engagement": 3,
-          "ambiguous_engagement": 2
+          "clear_engagement": 4,
+          "ambiguous_engagement": 3
         },
         "figure": "S10",
         "context": "Therapy engagement conversations missed by >50% of models"
