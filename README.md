@@ -232,31 +232,44 @@ The failure multiplier models conditional dependence between detection failures:
 - `m > 1`: Prior failures increase subsequent failure probability
 - Default values: [1, 2, 5, 10, 100, 1000, 10000, 100000]
 
-## Re-running Experiments
+## Cache and Experiment Execution
 
-The main pipeline script reads from cached model predictions:
+We provide a pre-built cache (`regulatory_paper_cache_v3/results.db`) so you can reproduce figures without re-running experiments.
 
-### Prerequisites
-- LM Studio running at `http://localhost:1234`
-- Models downloaded and available in LM Studio
+### Generating Cache from Scratch
 
-### Pipeline Options
+To regenerate the cache, use `bash_scripts/run_all_models.sh` for each task:
 
 ```bash
-# Standard run (uses cached predictions)
-python run_regulatory_simulation_paper_pipeline.py
+# Run for each of the 3 tasks (requires LM Studio + all 14 models)
+./bash_scripts/run_all_models.sh \
+    data/inputs/finalized_input_data/SI_finalized_sentences.csv \
+    data/prompts/system_suicide_detection_v2.txt \
+    system_suicide_detection_v2
 
-# Specify alternate cache directory
-python run_regulatory_simulation_paper_pipeline.py --cache-dir path/to/cache
+./bash_scripts/run_all_models.sh \
+    data/inputs/finalized_input_data/therapy_request_finalized_sentences.csv \
+    data/prompts/therapy_request_classifier_v3.txt \
+    therapy_request_classifier_v3
 
-# Override experiment directories with pre-computed results
-python run_regulatory_simulation_paper_pipeline.py \
-    --si-experiment-dir path/to/si_results \
-    --tr-experiment-dir path/to/tr_results \
-    --te-experiment-dir path/to/te_results
+./bash_scripts/run_all_models.sh \
+    data/inputs/finalized_input_data/therapy_engagement_finalized_sentences.csv \
+    data/prompts/therapy_engagement_conversation_prompt_v2.txt \
+    therapy_engagement_conversation_prompt_v2
 ```
 
-The pipeline uses `orchestration/run_experiment.py` internally to query models via LM Studio when cache misses occur.
+### Using the Provided Cache
+
+```bash
+# Full pipeline (figures + data + audits)
+python run_regulatory_simulation_paper_pipeline.py
+
+# Figures only (faster)
+python run_regulatory_simulation_paper_pipeline.py --figures-only
+
+# Preview without execution
+python run_regulatory_simulation_paper_pipeline.py --dry-run
+```
 
 ## Verification
 
