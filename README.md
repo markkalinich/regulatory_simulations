@@ -66,7 +66,7 @@ python run_regulatory_simulation_paper_pipeline.py
 
 This generates:
 - **Main Figures** (Figures 3, 4, 5)
-- **Supplementary Figures** (S4-S11)
+- **Supplementary Figures** (manuscript **S5–S13**; see Figure Guide — some pipeline folders use older numeric names)
 - **Data outputs** (raw data, processed metrics, model outputs)
 - **Logs** (pipeline log, manuscript claims verification, figure provenance, audits)
 Output location: `results/REGULATORY_SIMULATION_PAPER/[timestamp]/`
@@ -92,7 +92,7 @@ flowchart TB
         gemini["Gemini 2.5 Pro"] --> raw[Raw Synthetic Data]
         raw --> psych["2 Psychiatrists<br>Review & Label"]
         psych --> data[/"Approved<br>Synthetic Data"/]
-        data -.->|characterize| char["Response<br>Characterization<br>(Fig 3, S4)"]
+        data -.->|characterize| char["Response<br>Characterization<br>(Fig 3, S5)"]
     end
     
     subgraph P1[Phase 1: Classification]
@@ -107,8 +107,8 @@ flowchart TB
     end
     
     subgraph P3[Phase 3: Figures]
-        metrics --> perf["Performance<br>Characteristics<br>(Fig 4, S5-S10)"]
-        metrics --> risk["Risk Analysis<br>(Fig 5, S11)"]
+        metrics --> perf["Performance<br>Characteristics<br>(Fig 4, S6-S11)"]
+        metrics --> risk["Risk Analysis<br>(Fig 5, S13)"]
     end
     
     style cache fill:#e1f5fe,stroke:#01579b,stroke-width:3px
@@ -130,12 +130,15 @@ flowchart TB
 
 ### Supplementary Figures
 
-| Figure | Description | Script |
-|--------|-------------|--------|
-| **S4** | Sankey diagrams (expert review flow) | `analysis/data_validation/sankey_diagram_configs.py` |
-| **S5-S7** | Binary confusion matrices | `analysis/model_performance/generate_confusion_matrix_figures.py` |
-| **S8-S10** | Per-statement accuracy heatmaps | `analysis/model_performance/generate_model_statement_matrices.py` |
-| **S11** | P2 across all failure multiplier values | `analysis/comparative_analysis/figure_s11_p2_by_model_size_across_m.py` |
+Manuscript numbering is **S5–S13**. Output folder names are historical (`figure_S4`, `figures_S5-S7`, …) and are listed so you can find files in `results/…/Supplementary_Figures/`.
+
+| Manuscript | Description | Pipeline output | Script |
+|------------|-------------|-----------------|--------|
+| **S5** | Sankey diagrams (expert review flow) | `figure_S4/` | `analysis/data_validation/sankey_diagram_configs.py` |
+| **S6–S8** | Binary confusion matrices (SI, therapy request, therapy engagement) | `figures_S5-S7/` | `analysis/model_performance/generate_confusion_matrix_figures.py` |
+| **S9–S11** | Per-statement accuracy heatmaps (SI, therapy request, therapy engagement) | `figures_S8-S10/` | `analysis/model_performance/generate_model_statement_matrices.py` |
+| **S12** | Adjusted FNR vs observed FNR and failure multiplier *M* (heatmap) | `figure_S12/` | `analysis/revisions/figure_s12_failure_multiplier_heatmap.py` |
+| **S13** | P2 across failure-multiplier (*M*) values (correlated failure / harm prevalence) | `figure_S11/` | `analysis/comparative_analysis/figure_s11_p2_by_model_size_across_m.py` |
 
 ## Output Structure
 
@@ -147,10 +150,11 @@ results/REGULATORY_SIMULATION_PAPER/[YYYYMMDD_HHMMSS]/
 │   ├── figure_4.png                    # Model performance metrics
 │   └── figure_5/                       # P1/P2 risk analysis 
 ├── Supplementary_Figures/
-│   ├── figure_S4/                      # Sankey diagrams
-│   ├── figures_S5-S7/                  # Confusion matrices
-│   ├── figures_S8-S10/                 # Per-model, per-statement accuracy heatmaps
-│   └── figure_S11/                     # P2 correlated failure mode analysis
+│   ├── figure_S4/                      # Manuscript **S5**: Sankey diagrams
+│   ├── figures_S5-S7/                  # Manuscript **S6–S8**: Confusion matrices
+│   ├── figures_S8-S10/                 # Manuscript **S9–S11**: Per-statement accuracy heatmaps
+│   ├── figure_S11/                     # Manuscript **S13**: P2 across *M* values
+│   └── figure_S12/                     # Manuscript **S12**: FNR adjustment vs *M* heatmap
 ├── Data/
 │   ├── raw_data/
 │   │   ├── model_info/                 # paper_models_config.csv + manifest.json
@@ -277,9 +281,9 @@ The pipeline recalculates/rechecks key claims:
 
 1. **Manuscript Claims Verification** - Compares generated data against `config/manuscript_claims.json`
 2. **Figure Audits** - Independently recalculates values from cache and compares to outputs:
-   - Confusion matrix audit (Figures 4, S5-S7)
-   - Heatmap audit (Figures S8-S10)
-   - Figure S11 audit (P2 across M values)
+   - Confusion matrix audit (Figure 4 plus manuscript **S6–S8**; output `figures_S5-S7/`)
+   - Heatmap audit (manuscript **S9–S11**; output `figures_S8-S10/`)
+   - P2-across-*M* audit (manuscript **S13**; output `figure_S11/`)
 3. **Cache Audit** - Verifies cache integrity and parameter consistency
 
 **Output**: `Logs/manuscript_claims_verification.md`, `Logs/Audits/`, `Logs/figure_provenance/`
@@ -297,9 +301,9 @@ regulatory_simulations/
 │   ├── model_performance/                       # Metrics and confusion matrices
 │   └── comparative_analysis/                    # Cross-model comparisons
 ├── utilities/
-│   ├── confusion_matrix_audit.py                # Figures 4, S5-S7 audit
-│   ├── heatmap_audit.py                         # Figures S8-S10 audit
-│   └── figure_s11_audit.py                      # Figure S11 audit
+│   ├── confusion_matrix_audit.py                # Fig 4 + manuscript S6–S8 audit
+│   ├── heatmap_audit.py                         # Manuscript S9–S11 audit
+│   └── figure_s11_audit.py                      # Manuscript S13 (output folder figure_S11) audit
 ├── regulatory_paper_cache_v3/
 │   └── results.db                               # Cached model predictions
 ├── data/
@@ -322,4 +326,14 @@ If you use this code or data, please cite:
   doi={10.1101/2025.11.10.25339903}
 }
 ```
+
+---
+
+## TODO (defer until final pass)
+
+### Figure guide ↔ pipeline output names
+
+The [Figure Guide](#figure-guide) uses **manuscript supplementary numbering (S5–S13)** and maps each figure to **historical pipeline folder names** (e.g. manuscript S5 → `figure_S4/`, manuscript S13 → `figure_S11/`). That mismatch is intentional for now to avoid churn in the pipeline, audits, and provenance.
+
+**Planned:** After reviewer revisions are complete, perform **one surgical change set** that renames outputs, paths, and references in code so **folder and file names match the manuscript figure numbers**, then **freeze** the release (tag / resubmission bundle). Until then, treat renames as out of scope and rely on the Figure Guide table for the mapping.
 

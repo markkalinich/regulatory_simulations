@@ -10,11 +10,12 @@ Main Figures:
     Figure 4: Model performance metrics (parse rate, sens/spec/accuracy/f1)
     Figure 5: P1/P2/P_harm risk analysis (failure_multiplier m values from config)
 
-Supplementary Figures:
-    Figure S4: Sankey diagrams (SI, therapy request, therapy engagement)
-    Figures S5-S7: Binary confusion matrices (SI, Therapy Request, Therapy Engagement)
-    Figures S8-S10: Per-statement accuracy heatmaps (SI, Therapy Request, Therapy Engagement)
-    Figure S11: P2 vs P(lack of care leading to harm) Across Failure Multiplier Values
+Supplementary Figures (manuscript S5-S13; folder names are historical):
+    Manuscript S5  (folder figure_S4/): Sankey diagrams (SI, therapy request, therapy engagement)
+    Manuscript S6-S8  (folder figures_S5-S7/): Binary confusion matrices
+    Manuscript S9-S11  (folder figures_S8-S10/): Per-statement accuracy heatmaps
+    Manuscript S12  (folder figure_S12/): Heatmap of adjusted FNR vs FNR_observed and M
+    Manuscript S13  (folder figure_S11/): P2 vs P(lack of care leading to harm) across failure multiplier M
 
 Output Structure:
     results/REGULATORY_SIMULATION_PAPER/[YYYYMMDD_HHMMSS]/
@@ -24,10 +25,11 @@ Output Structure:
             figure_4.png                 # Model performance metrics
             figure_5/                    # P1/P2/P_harm risk analysis
         Supplementary_Figures/
-            figure_S4/                   # Sankey diagrams
-            figures_S5-S7/               # Binary confusion matrices
-            figures_S8-S10/              # Per-statement accuracy heatmaps  
-            figure_S11/                  # P2 across failure multiplier values
+            figure_S4/                   # Manuscript S5: Sankey diagrams
+            figures_S5-S7/               # Manuscript S6-S8: Binary confusion matrices
+            figures_S8-S10/              # Manuscript S9-S11: Per-statement accuracy heatmaps
+            figure_S11/                  # Manuscript S13: P2 across failure multiplier M
+            figure_S12/                  # Manuscript S12: FNR adjustment heatmap
         Data/
             raw_data/
                 model_info/              # Model configuration (paper_models_config.csv + manifest.json)
@@ -509,7 +511,7 @@ def generate_figure_5(
 ) -> bool:
     """Generate Figure 5: P1/P2/P_harm Risk Analysis for m=1.0 (baseline).
     
-    Note: Figure S11 shows P2 across all failure multiplier values.
+    Note: Manuscript Fig S13 (output figure_S11/) shows P2 across all failure multiplier values.
     """
     log_subsection(logger, "Figure 5: P1/P2/P_harm Risk Analysis")
     
@@ -520,7 +522,7 @@ def generate_figure_5(
     tr_csv = filtered_csvs['therapy_request']
     te_csv = filtered_csvs['therapy_engagement']
     
-    m = 1.0  # Only generate m=1.0 for Figure 5 (Figure S11 shows all M values)
+    m = 1.0  # Only generate m=1.0 for Figure 5 (manuscript S13 / figure_S11 shows all M values)
     logger.info(f"  Generating m = {m}...")
     
     args = [
@@ -790,12 +792,12 @@ def generate_figure_s11(
     logger: logging.Logger,
     dry_run: bool = False
 ) -> bool:
-    """Generate Figure S11: P2 by Harm Prevalence Across Failure Multiplier Values.
+    """Generate manuscript Figure S13 (output folder figure_S11): P2 by harm prevalence across M.
     
     Shows how P2 varies with harm prevalence at different failure multiplier (M) values.
     Uses the same underlying data as Figure 5 but shows all M values in a single facet plot.
     """
-    log_subsection(logger, "Figure S11: P2 Across M Values")
+    log_subsection(logger, "Manuscript Fig S13 (figure_S11): P2 Across M Values")
     
     script = ROOT / "analysis" / "comparative_analysis" / "figure_s11_p2_by_model_size_across_m.py"
     output_dir = SUPP_FIGURES_DIR / "figure_S11"
@@ -835,6 +837,41 @@ def generate_figure_s11(
                 shutil.rmtree(subdir)
     
     return success
+
+
+def generate_figure_s12(
+    logger: logging.Logger,
+    dry_run: bool = False,
+) -> bool:
+    """Generate manuscript Figure S12: heatmap of adjusted FNR vs FNR_observed and M.
+
+    Illustrates FNR_adjusted = 1 - (1 - FNR_observed)^M for reviewer response;
+    no experiment cache required.
+    """
+    log_subsection(logger, "Manuscript Fig S12: FNR adjustment vs M (heatmap)")
+
+    script = ROOT / "analysis" / "revisions" / "figure_s12_failure_multiplier_heatmap.py"
+    output_dir = SUPP_FIGURES_DIR / "figure_S12"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    args = ["--output-dir", str(output_dir)]
+    success = run_python_script(script, args, logger, dry_run=dry_run)
+
+    if success and not dry_run:
+        old_name = output_dir / "figure_s12_failure_multiplier_fnr_heatmap.png"
+        new_name = output_dir / "figure_S12.png"
+        if old_name.exists():
+            old_name.rename(new_name)
+            logger.info(f"  ✅ Saved: figure_S12/figure_S12.png")
+        else:
+            logger.warning(f"  ⚠️ Output not found: {old_name.name}")
+
+        for subdir in list(output_dir.iterdir()):
+            if subdir.is_dir() and subdir.name.isdigit():
+                shutil.rmtree(subdir)
+
+    return success
+
 
 # =============================================================================
 # Data Collection
@@ -1127,6 +1164,7 @@ def extract_provenance_from_pngs(logger: logging.Logger, dry_run: bool = False) 
         (SUPP_FIGURES_DIR / "figures_S8-S10" / "figure_S9.png", "figure_S9"),
         (SUPP_FIGURES_DIR / "figures_S8-S10" / "figure_S10.png", "figure_S10"),
         (SUPP_FIGURES_DIR / "figure_S11" / "figure_S11.png", "figure_S11"),
+        (SUPP_FIGURES_DIR / "figure_S12" / "figure_S12.png", "figure_S12"),
     ]
     
     extracted_count = 0
@@ -1191,11 +1229,12 @@ This directory contains all figures, data, and logs generated by the regulatory 
 │   ├── figure_4.png            # Model performance metrics (parse rate, sensitivity, specificity, accuracy, F1)
 │   └── figure_5/               # P1/P2/P_harm risk analysis across failure multiplier values
 │
-├── Supplementary_Figures/       # Supplementary figures
-│   ├── figure_S4/              # Sankey diagrams showing ground truth → model prediction flows
-│   ├── figures_S5-S7/          # Binary confusion matrices (SI, Therapy Request, Therapy Engagement)
-│   ├── figures_S8-S10/         # Per-statement accuracy heatmaps showing model × statement performance
-│   └── figure_S11/             # P2 across failure multiplier (M) values
+├── Supplementary_Figures/       # Supplementary figures (manuscript S5-S13; see repo README Figure Guide)
+│   ├── figure_S4/              # Manuscript S5: Sankey diagrams (ground truth → model prediction flows)
+│   ├── figures_S5-S7/          # Manuscript S6-S8: Binary confusion matrices (SI, TR, TE)
+│   ├── figures_S8-S10/         # Manuscript S9-S11: Per-statement accuracy heatmaps
+│   ├── figure_S11/             # Manuscript S13: P2 across failure multiplier (M) values
+│   └── figure_S12/             # Manuscript S12: Adjusted FNR heatmap (M vs observed FNR)
 │
 ├── Data/
 │   ├── raw_data/
@@ -1232,9 +1271,9 @@ This directory contains all figures, data, and logs generated by the regulatory 
     │   └── *_audit_summary.json           # Audit provenance (verification summaries)
     └── Audits/                 # Detailed audit reports (CSV)
         ├── cache_audit_report.csv              # Cache integrity check
-        ├── confusion_matrix_audit_report.csv   # Figures 4, S5-S7 verification
-        ├── heatmap_audit_report.csv            # Figures S8-S10 verification
-        └── figure_s11_audit_report.csv         # Figure S11 verification
+        ├── confusion_matrix_audit_report.csv   # Fig 4 + manuscript S6-S8 verification
+        ├── heatmap_audit_report.csv            # Manuscript S9-S11 verification
+        └── figure_s11_audit_report.csv         # Manuscript S13 (figure_S11 output) verification
 ```
 
 ## Key Files
@@ -1243,6 +1282,8 @@ This directory contains all figures, data, and logs generated by the regulatory 
 - **figure_3.png**: Shows psychiatrist review outcomes for each task
 - **figure_4.png**: Model performance comparison with binary classification metrics
 - **figure_5/**: Risk analysis showing P1, P2, and P_harm across model sizes
+- **figure_S12/figure_S12.png**: Manuscript **S12** — adjusted FNR vs observed FNR and failure multiplier *M*
+- **figure_S11/figure_S11.png**: Manuscript **S13** — P2 across failure-multiplier *M* values
 
 ### Verification & Provenance
 - **Logs/figure_provenance/**: JSON files with complete provenance
@@ -1453,6 +1494,9 @@ def run_pipeline(args: argparse.Namespace) -> int:
     
     if not generate_figure_s11(filtered_csvs, logger, args.dry_run):
         success = False
+
+    if not generate_figure_s12(logger, args.dry_run):
+        success = False
     
     # Collect data (unless figures-only)
     if not args.figures_only:
@@ -1587,8 +1631,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
         else:
             logger.warning(f"  ⚠️ Heatmap audit FAILED - review report")
         
-        # Figure S11 Audit (P2 across failure multiplier values)
-        logger.info("  Running Figure S11 audit (P2 across M values)...")
+        # Manuscript Fig S13 audit (output figure_S11; P2 across M values)
+        logger.info("  Running manuscript Fig S13 audit (figure_S11 output, P2 across M values)...")
         s11_audit_script = ROOT / "utilities" / "figure_s11_audit.py"
         s11_audit_args = [
             "--paper-run-dir", str(PAPER_OUTPUT_BASE),
@@ -1596,9 +1640,9 @@ def run_pipeline(args: argparse.Namespace) -> int:
         ]
         s11_audit_success = run_python_script(s11_audit_script, s11_audit_args, logger, dry_run=args.dry_run)
         if s11_audit_success:
-            logger.info(f"  ✅ Figure S11 audit passed")
+            logger.info(f"  ✅ Manuscript Fig S13 (figure_S11) audit passed")
         else:
-            logger.warning(f"  ⚠️ Figure S11 audit FAILED - review report")
+            logger.warning(f"  ⚠️ Manuscript Fig S13 (figure_S11) audit FAILED - review report")
         
         logger.info(f"  ✅ Audit reports saved to: {audits_dir}")
     else:

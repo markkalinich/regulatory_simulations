@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Figure S11: P2 by Harm Prevalence Across Failure Multiplier Values
+Manuscript supplementary Figure S13 (pipeline output: figure_S11/): P2 by harm prevalence across M.
 
 Shows how P2 varies with harm prevalence at different failure multiplier (M) values.
 Each row shows a different M value, demonstrating convergence behavior as 
@@ -49,7 +49,7 @@ FAMILY_COLORS = {'gemma': '#1f77b4', 'qwen': '#ff7f0e', 'llama': '#2ca02c'}
 
 
 def create_figure_s11(si_csv, tr_csv, te_csv, output_path, params=None, tracker=None):
-    """Create Figure S11: P2 facet plot across M values
+    """Create manuscript Fig S13 (output figure_S11): P2 facet plot across M values
     
     Args:
         si_csv: Path to SI comprehensive_metrics.csv
@@ -231,7 +231,7 @@ def create_figure_s11(si_csv, tr_csv, te_csv, output_path, params=None, tracker=
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate Figure S11: P2 across M values'
+        description='Generate manuscript Fig S13 (figure_S11 output): P2 across M values'
     )
     parser.add_argument('--si-metrics', type=str, required=True,
                        help='Path to SI comprehensive_metrics.csv')
