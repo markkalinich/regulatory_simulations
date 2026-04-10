@@ -67,6 +67,7 @@ python run_regulatory_simulation_paper_pipeline.py
 This generates:
 - **Main Figures** (Figures 3, 4, 5)
 - **Supplementary Figures** (manuscript **S5–S13**; see Figure Guide — some pipeline folders use older numeric names)
+- **Supplementary Tables S1–S3** → `Data/processed_data/supplementary_tables/` (`analysis/generate_supplementary_tables.py`)
 - **Data outputs** (raw data, processed metrics, model outputs)
 - **Logs** (pipeline log, manuscript claims verification, figure provenance, audits)
 Output location: `results/REGULATORY_SIMULATION_PAPER/[timestamp]/`
@@ -167,7 +168,8 @@ results/REGULATORY_SIMULATION_PAPER/[YYYYMMDD_HHMMSS]/
 │       ├── correlated_failure_analysis/
 │       ├── difficult_statement_analysis/
 │       ├── model_performance_metrics/
-│       └── psychiatrist_statement_review/
+│       ├── psychiatrist_statement_review/
+│       └── supplementary_tables/        # S1–S3 CSVs
 └── Logs/
     ├── pipeline.log
     ├── manuscript_claims_verification.md # calculate every numerical claim in our paper from cache 

@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 """
-P1 / P2 risk plot — single-column variant with three models (Gemma 12B, Qwen 8B, LLaMA 8B).
-
-One-off script for presentations: same axes and facet rows as Figure 5, but one column
-with only these three models to highlight model-family differences at similar size.
-
-Uses the same data and risk logic as p1_and_p2_plot_provenance.py.
+Optional P1/P2 layout (not a main figure): 1 column, Gemma 12B + Qwen 8B + LLaMA 8B only.
+Same logic as Figure 5 (`p1_and_p2_plot_provenance.py`). Also supports `--figure-3-summary`
+(Keep/Remove bar sketch — not the pipeline’s Figure 3).
 
 Example (after running the paper pipeline; paths under results/REGULATORY_SIMULATION_PAPER/<timestamp>/):
   python analysis/comparative_analysis/p1_p2_plot_single_column_three_models.py \\

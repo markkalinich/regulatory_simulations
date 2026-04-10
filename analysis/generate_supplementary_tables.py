@@ -36,8 +36,16 @@ SI_TABLE_INTERNAL_TO_FINALIZED_SAFETY_TYPE = {
     "active_si_abstract": "active_si_no_plan",
     "preparatory_si": "active_si_plan_with_intent_prep",
 }
-# Output to Supplementary_Tables (parallel to Supplementary_Figures in pipeline output)
-RESULTS_DIR = ROOT / "results" / "Supplementary_Tables"
+# Default when running this script standalone (pipeline passes --output-dir)
+DEFAULT_OUTPUT_DIR = ROOT / "results" / "Supplementary_Tables"
+
+
+def write_supplementary_tables(output_dir: Path) -> None:
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    generate_table_s1().to_csv(output_dir / "table_s1_si_synthetic_data.csv", index=False)
+    generate_table_s2().to_csv(output_dir / "table_s2_therapy_request_synthetic_data.csv", index=False)
+    generate_table_s3().to_csv(output_dir / "table_s3_therapy_engagement_synthetic_data.csv", index=False)
 
 
 def aggregate_te_subcategory(subcategory: str) -> str:
@@ -405,43 +413,15 @@ def generate_table_s3():
 
 
 if __name__ == "__main__":
-    # Create output directory
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    
-    print("=" * 100)
-    print("TABLE S1: Characterizing SI detection synthetic data")
-    print("Source: data/inputs/intermediate_files/SI_psychiatrist_01_and_02_scores.csv")
-    print("=" * 100)
-    print()
-    
-    table_s1 = generate_table_s1()
-    print(table_s1.to_string(index=False))
-    table_s1.to_csv(RESULTS_DIR / "table_s1_si_synthetic_data.csv", index=False)
-    print(f"\nSaved to: {RESULTS_DIR / 'table_s1_si_synthetic_data.csv'}")
-    
-    print()
-    print("=" * 100)
-    print("TABLE S2: Characterizing therapy request synthetic data")
-    print("Source: data/inputs/intermediate_files/therapy_request_psychiatrist_01_and_02_scores.csv")
-    print("=" * 100)
-    print()
-    
-    table_s2 = generate_table_s2()
-    print(table_s2.to_string(index=False))
-    table_s2.to_csv(RESULTS_DIR / "table_s2_therapy_request_synthetic_data.csv", index=False)
-    print(f"\nSaved to: {RESULTS_DIR / 'table_s2_therapy_request_synthetic_data.csv'}")
-    
-    print()
-    print("=" * 100)
-    print("TABLE S3: Characterizing therapy engagement synthetic data")
-    print("Source: data/inputs/intermediate_files/therapy_engagement_psychiatrist_01_and_02_scores.csv")
-    print("=" * 100)
-    print()
-    
-    table_s3 = generate_table_s3()
-    print(table_s3.to_string(index=False))
-    table_s3.to_csv(RESULTS_DIR / "table_s3_therapy_engagement_synthetic_data.csv", index=False)
-    print(f"\nSaved to: {RESULTS_DIR / 'table_s3_therapy_engagement_synthetic_data.csv'}")
-    
-    print()
-    print("=" * 100)
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Generate Supplementary Tables S1-S3.")
+    ap.add_argument(
+        "--output-dir",
+        type=Path,
+        default=DEFAULT_OUTPUT_DIR,
+        help=f"Directory for CSV output (default: {DEFAULT_OUTPUT_DIR})",
+    )
+    args = ap.parse_args()
+    write_supplementary_tables(args.output_dir)
+    print(f"Wrote S1-S3 CSVs to {args.output_dir.resolve()}")
