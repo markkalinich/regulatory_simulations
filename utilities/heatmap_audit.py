@@ -2,7 +2,7 @@
 """
 Heatmap and Difficult Statement Analysis Audit Script
 
-Independently verifies Figures S8-S10 (per-statement accuracy heatmaps) and 
+Independently verifies Figures S9-S11 (per-statement accuracy heatmaps) and 
 the difficult statement analysis by:
 
 1. Recalculating correctness matrices from model output CSVs
@@ -11,7 +11,7 @@ the difficult statement analysis by:
 4. Validating figure provenance files
 
 This script provides an audit trail for:
-- Figures S8-S10: Per-statement/conversation accuracy heatmaps
+- Figures S9-S11: Per-statement/conversation accuracy heatmaps
 - Difficult statement analysis used in manuscript Section 2
 
 Usage:
@@ -55,7 +55,8 @@ TASK_CONFIG = {
         'matrix_file': 'si_model_statement_correctness_matrix.csv',
         'info_file': 'si_statement_info.csv',
         'breakdown_file': 'suicidal_ideation_difficult_statements_breakdown.csv',
-        'figure_name': 'figure_S8',
+        'figure_name': 'figure_S9',
+        'heatmap_provenance_basename': 'si_correctness_heatmap',
         'expected_samples': 450,
     },
     'therapy_request': {
@@ -65,7 +66,8 @@ TASK_CONFIG = {
         'matrix_file': 'therapy_request_model_statement_correctness_matrix.csv',
         'info_file': 'therapy_request_statement_info.csv',
         'breakdown_file': 'therapy_request_difficult_statements_breakdown.csv',
-        'figure_name': 'figure_S9',
+        'figure_name': 'figure_S10',
+        'heatmap_provenance_basename': 'therapy_request_correctness_heatmap',
         'expected_samples': 780,
     },
     'therapy_engagement': {
@@ -75,7 +77,8 @@ TASK_CONFIG = {
         'matrix_file': 'therapy_engagement_model_conversation_correctness_matrix.csv',
         'info_file': 'therapy_engagement_conversation_info.csv',
         'breakdown_file': 'therapy_engagement_difficult_statements_breakdown.csv',
-        'figure_name': 'figure_S10',
+        'figure_name': 'figure_S11',
+        'heatmap_provenance_basename': 'therapy_engagement_correctness_heatmap',
         'expected_samples': 420,
     },
 }
@@ -314,21 +317,23 @@ def compute_file_hash(file_path: Path) -> str:
     return sha256.hexdigest()
 
 
-def load_figure_provenance(output_dir: Path, figure_name: str) -> Optional[Dict]:
-    """Load provenance JSON for a heatmap figure."""
-    # Heatmaps are in results/model_performance_analysis/{date}/{timestamp}_{name}/
+def load_figure_provenance(heatmap_provenance_basename: str) -> Optional[Dict]:
+    """Load provenance JSON for a heatmap figure.
+
+    ``heatmap_provenance_basename`` matches the substring in
+    ``results/model_performance_analysis/<date>/<timestamp>_<basename>/`` and the
+    provenance file ``<basename>_provenance.json`` (see ``figures_s9_s11_heatmaps.py``).
+    """
     base_dir = PROJECT_ROOT / 'results' / 'model_performance_analysis'
     
     if not base_dir.exists():
         return None
     
-    # Find most recent date directory
     date_dirs = sorted([d for d in base_dir.iterdir() if d.is_dir()], reverse=True)
     if not date_dirs:
         return None
     
-    # Find the heatmap directory
-    heatmap_name = figure_name.replace('figure_', '').lower() + '_correctness_heatmap'
+    heatmap_name = heatmap_provenance_basename
     
     for date_dir in date_dirs:
         for subdir in date_dir.iterdir():
@@ -346,18 +351,18 @@ def run_audit(
     output_path: Path
 ) -> pd.DataFrame:
     """
-    Run full audit for Figures S8-S10 and difficult statement analysis.
+    Run full audit for Figures S9-S11 and difficult statement analysis.
     
     Returns DataFrame with audit results.
     """
     print("=" * 70)
-    print("FIGURES S8-S10 & DIFFICULT STATEMENT ANALYSIS AUDIT")
+    print("FIGURES S9-S11 & DIFFICULT STATEMENT ANALYSIS AUDIT")
     print("=" * 70)
     print(f"Paper run: {paper_run_dir}")
     print(f"Output: {output_path}")
     print()
     print("This audit verifies:")
-    print("  - Figures S8-S10: Per-statement/conversation accuracy heatmaps")
+    print("  - Figures S9-S11: Per-statement/conversation accuracy heatmaps")
     print("  - Difficult statement counts and category breakdowns")
     print("  - Threshold: miss_rate > 0.5 (missed by 8+ of 14 models)")
     print()
@@ -524,7 +529,7 @@ def run_audit(
         # Step 6: Check provenance
         print("\nStep 6: Checking figure provenance...")
         heatmap_name = config['figure_name'].replace('figure_', '') + '_correctness_heatmap'
-        provenance = load_figure_provenance(paper_run_dir, config['figure_name'])
+        provenance = load_figure_provenance(config['heatmap_provenance_basename'])
         
         provenance_found = provenance is not None
         if provenance_found:
@@ -626,7 +631,7 @@ def run_audit(
     
     if passed_tasks == total_tasks:
         print("\n" + "=" * 70)
-        print("✅ ALL FIGURES S8-S10 VERIFIED")
+        print("✅ ALL FIGURES S9-S11 VERIFIED")
         print("=" * 70)
         print("Correctness matrices and difficult statement analysis match exactly.")
     else:
@@ -644,7 +649,7 @@ def run_audit(
     summary = {
         'audit_timestamp': datetime.now().isoformat(),
         'paper_run_dir': str(paper_run_dir),
-        'figures_verified': ['Figure S8', 'Figure S9', 'Figure S10'],
+        'figures_verified': ['Figure S9', 'Figure S10', 'Figure S11'],
         'total_tasks': total_tasks,
         'passed': passed_tasks,
         'failed': total_tasks - passed_tasks,
@@ -692,7 +697,7 @@ def find_latest_paper_run() -> Optional[Path]:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Audit Figures S8-S10 heatmaps and difficult statement analysis"
+        description="Audit Figures S9-S11 heatmaps and difficult statement analysis"
     )
     parser.add_argument(
         '--paper-run-dir',

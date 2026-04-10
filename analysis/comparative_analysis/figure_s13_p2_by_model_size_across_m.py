@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Manuscript supplementary Figure S13 (pipeline output: figure_S11/): P2 by harm prevalence across M.
+Manuscript supplementary Figure S13 (pipeline output: figure_S13/): P2 by harm prevalence across M.
 
 Shows how P2 varies with harm prevalence at different failure multiplier (M) values.
 Each row shows a different M value, demonstrating convergence behavior as 
@@ -19,7 +19,7 @@ import argparse
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-# Import functions from the existing Figure 5 script
+# Import functions from the existing Figure 4 (P1/P2) script
 from analysis.comparative_analysis.p1_and_p2_plot_provenance import (
     load_experiment_metrics,
     prepare_plot_data,
@@ -48,8 +48,8 @@ MODEL_FAMILIES = {'gemma': 'Gemma', 'qwen': 'Qwen', 'llama': 'LLaMA'}
 FAMILY_COLORS = {'gemma': '#1f77b4', 'qwen': '#ff7f0e', 'llama': '#2ca02c'}
 
 
-def create_figure_s11(si_csv, tr_csv, te_csv, output_path, params=None, tracker=None):
-    """Create manuscript Fig S13 (output figure_S11): P2 facet plot across M values
+def create_figure_s13(si_csv, tr_csv, te_csv, output_path, params=None, tracker=None):
+    """Create manuscript Fig S13 (output figure_S13/): P2 facet plot across M values
     
     Args:
         si_csv: Path to SI comprehensive_metrics.csv
@@ -231,7 +231,7 @@ def create_figure_s11(si_csv, tr_csv, te_csv, output_path, params=None, tracker=
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate manuscript Fig S13 (figure_S11 output): P2 across M values'
+        description='Generate manuscript Fig S13 (figure_S13/): P2 across M values'
     )
     parser.add_argument('--si-metrics', type=str, required=True,
                        help='Path to SI comprehensive_metrics.csv')
@@ -250,13 +250,13 @@ def main():
     
     # Initialize provenance tracker
     tracker = FigureProvenanceTracker(
-        figure_name='figure_s11_p2_across_m_values',
+        figure_name='figure_s13_p2_across_m_values',
         base_dir=output_dir,
     )
     
     # Generate figure
-    output_path = output_dir / 'figure_s11_p2_across_m_values.png'
-    create_figure_s11(args.si_metrics, args.tr_metrics, args.te_metrics, output_path, tracker=tracker)
+    output_path = output_dir / 'figure_s13_p2_across_m_values.png'
+    create_figure_s13(args.si_metrics, args.tr_metrics, args.te_metrics, output_path, tracker=tracker)
 
 
 if __name__ == '__main__':

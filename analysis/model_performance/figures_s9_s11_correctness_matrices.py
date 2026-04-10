@@ -13,9 +13,9 @@ For a simpler standalone version with hardcoded paths, see:
     generate_correctness_matrices.py
 
 Usage:
-    python generate_model_statement_matrices.py --experiment-dir <path> --task-type suicidal_ideation
-    python generate_model_statement_matrices.py --experiment-dir <path> --task-type therapy_request
-    python generate_model_statement_matrices.py --experiment-dir <path> --task-type therapy_engagement
+    python figures_s9_s11_correctness_matrices.py --experiment-dir <path> --task-type suicidal_ideation
+    python figures_s9_s11_correctness_matrices.py --experiment-dir <path> --task-type therapy_request
+    python figures_s9_s11_correctness_matrices.py --experiment-dir <path> --task-type therapy_engagement
 
 Uses BINARY classification to match comprehensive_metrics.csv (SI vs non-SI, etc.)
 Classification utilities are imported from utilities/classification_utils.py

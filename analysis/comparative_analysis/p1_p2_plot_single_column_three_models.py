@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
 Optional P1/P2 layout (not a main figure): 1 column, Gemma 12B + Qwen 8B + LLaMA 8B only.
-Same logic as Figure 5 (`p1_and_p2_plot_provenance.py`). Also supports `--figure-3-summary`
-(Keep/Remove bar sketch — not the pipeline’s Figure 3).
+Same logic as Figure 4 (`p1_and_p2_plot_provenance.py`). Also supports `--figure-2-summary`
+(aliases `--figure-3-summary`; Keep/Remove bar sketch — not the pipeline’s Figure 2).
 
 Example (after running the paper pipeline; paths under results/REGULATORY_SIMULATION_PAPER/<timestamp>/):
   python analysis/comparative_analysis/p1_p2_plot_single_column_three_models.py \\
     --suicide-csv results/REGULATORY_SIMULATION_PAPER/<timestamp>/Data/processed_data/model_performance_metrics/suicidal_ideation_comprehensive_metrics.csv \\
     --therapy-request-csv results/.../therapy_request_comprehensive_metrics.csv \\
     --therapy-engagement-csv results/.../therapy_engagement_comprehensive_metrics.csv \\
-    --output results/.../Figures/figure_5_single_column_three_models.png
+    --output results/.../Figures/figure_4_single_column_three_models.png
 """
 
 import argparse
@@ -19,7 +19,7 @@ import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# Project root and imports from main Figure 5 script
+# Project root and imports from main Figure 4 (P1/P2) script
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
@@ -102,7 +102,7 @@ def create_single_column_plot(
     plot_data["_sort"] = plot_data.apply(sort_key, axis=1)
     plot_data = plot_data.sort_values("_sort").drop(columns=["_sort"])
 
-    # Styling (match Figure 5)
+    # Styling (match Figure 4)
     title_size = 28
     tick_size = 22
     plt.rcParams.update({
@@ -220,13 +220,13 @@ def create_single_column_plot(
 
 
 # -----------------------------------------------------------------------------
-# Figure 3 summary: single figure, 3 columns, Keep (green) / Remove (red)
+# Figure 2 summary (optional): single figure, 3 columns, Keep (green) / Remove (red)
 # -----------------------------------------------------------------------------
 KEEP_COLOR = "#2ecc71"   # green
 REMOVE_COLOR = "#e74c3c"  # red
 
 
-def create_figure3_summary_plot(output_path: Path, figsize=(8, 3.6)) -> None:
+def create_figure2_summary_plot(output_path: Path, figsize=(8, 3.6)) -> None:
     """
     Single plot, 3 bars: one bar per task (SI, Therapy Request, Therapy Interaction).
     Each bar is one stacked column: Keep (green) vs Remove (red), aggregated across all subcategories.
@@ -292,16 +292,21 @@ def main():
     from datetime import datetime
 
     parser = argparse.ArgumentParser(
-        description="P1/P2 risk plot (single column, 3 models) or Figure 3 summary (Keep/Remove, 3 columns)."
+        description="P1/P2 risk plot (single column, 3 models) or Figure 2 summary (Keep/Remove, 3 columns)."
     )
-    parser.add_argument("--figure-3-summary", action="store_true",
-                        help="Generate Figure 3 summary: 3 columns (SI, therapy request, therapy engagement), Keep (green) / Remove (red). Uses data from data/inputs/intermediate_files/.")
+    parser.add_argument(
+        "--figure-2-summary", "--figure-3-summary",
+        action="store_true",
+        dest="figure_2_summary",
+        help="Figure 2 summary: 3 columns (SI, therapy request, therapy engagement), Keep (green) / Remove (red). "
+             "Uses data from data/inputs/intermediate_files/. (--figure-3-summary is a deprecated alias.)",
+    )
     parser.add_argument("--suicide-csv", type=Path, default=None,
-                        help="Path to suicide ideation comprehensive_metrics.csv (required unless --figure-3-summary)")
+                        help="Path to suicide ideation comprehensive_metrics.csv (required unless --figure-2-summary)")
     parser.add_argument("--therapy-request-csv", type=Path, default=None,
-                        help="Path to therapy request comprehensive_metrics.csv (required unless --figure-3-summary)")
+                        help="Path to therapy request comprehensive_metrics.csv (required unless --figure-2-summary)")
     parser.add_argument("--therapy-engagement-csv", type=Path, default=None,
-                        help="Path to therapy engagement comprehensive_metrics.csv (required unless --figure-3-summary)")
+                        help="Path to therapy engagement comprehensive_metrics.csv (required unless --figure-2-summary)")
     parser.add_argument("--output", type=Path, default=None,
                         help="Output PNG path")
     parser.add_argument("--failure-multiplier", type=float,
@@ -317,14 +322,14 @@ def main():
 
     args = parser.parse_args()
 
-    if args.figure_3_summary:
-        out = args.output or ROOT / "results" / "figure_3_summary_keep_remove.png"
-        create_figure3_summary_plot(out)
+    if args.figure_2_summary:
+        out = args.output or ROOT / "results" / "figure_2_summary_keep_remove.png"
+        create_figure2_summary_plot(out)
         return
 
     # P1/P2 plot: require the three metrics CSVs
     if args.suicide_csv is None or args.therapy_request_csv is None or args.therapy_engagement_csv is None:
-        parser.error("--suicide-csv, --therapy-request-csv, and --therapy-engagement-csv are required for the P1/P2 plot (omit --figure-3-summary).")
+        parser.error("--suicide-csv, --therapy-request-csv, and --therapy-engagement-csv are required for the P1/P2 plot (omit --figure-2-summary).")
     for p in [args.suicide_csv, args.therapy_request_csv, args.therapy_engagement_csv]:
         if not p.exists():
             raise FileNotFoundError(f"Not found: {p}")
@@ -337,7 +342,7 @@ def main():
     out = args.output
     if out is None:
         out_dir = ROOT / "results" / "risk_analysis" / datetime.now().strftime("%Y%m%d_%H%M%S")
-        out = out_dir / "figure_5_single_column_three_models.png"
+        out = out_dir / "figure_4_single_column_three_models.png"
 
     create_single_column_plot(
         args.suicide_csv,

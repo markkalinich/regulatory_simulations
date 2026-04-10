@@ -37,7 +37,7 @@ EXPERIMENT_PARAMS = {
 }
 
 # =============================================================================
-# RISK MODEL PARAMETERS (for P1/P2/P_harm analysis - Figure 5, S10)
+# RISK MODEL PARAMETERS (for P1/P2/P_harm analysis - Figure 4; supplementary S12–S13)
 # =============================================================================
 RISK_MODEL_PARAMS = {
     # --- Empirical estimates from Anthropic (2025) ---

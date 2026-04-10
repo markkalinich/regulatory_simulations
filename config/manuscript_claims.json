@@ -86,7 +86,7 @@
     "description": "Results section claims",
     
     "synthetic_data": {
-      "description": "Gemini-generated synthetic data (Figure 3)",
+      "description": "Gemini-generated synthetic data (Figure 2)",
       "claims": {
         "non_si_retained": {
           "claim_text": "481/500 for Non-suicidal Statements retained; performance declined for sad, ambiguous, and angry tone",
@@ -115,7 +115,7 @@
           "verification": "computed_from_csv"
         },
         "therapy_engagement_retention": {
-          "claim_text": "Nearly all non-therapeutic and ambiguous conversations were retained, but fewer than half of simulated therapeutic exchanges met criteria without modification (Figure 3C, Table S3, p < 0·001)",
+          "claim_text": "Nearly all non-therapeutic and ambiguous conversations were retained, but fewer than half of simulated therapeutic exchanges met criteria without modification (Figure 2C, Table S3, p < 0·001)",
           "non_therapeutic_ambiguous_threshold_pct": 90,
           "therapeutic_threshold_pct": 50,
           "p_value_threshold": 0.001,
@@ -196,7 +196,7 @@
     },
 
     "p1_p2": {
-      "description": "P1 and P2 risk estimates (Figure 5, S11)",
+      "description": "P1 and P2 risk estimates (Figure 4, S13)",
       "claims": {
         "p1_range": {
           "claim_text": "Estimates of P1 ranged from 1·1 × 10⁻⁸ to 1·6 × 10⁻⁴ at a 1% baseline prevalence of suicidal ideation, spanning four orders of magnitude and corresponding to 0·011 to 161 hazardous situations per million individual user–model exchanges",

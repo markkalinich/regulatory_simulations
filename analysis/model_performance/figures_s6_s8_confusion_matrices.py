@@ -11,7 +11,7 @@ This script wraps the existing confusion matrix functions and adds
 provenance tracking for reproducibility.
 
 Usage:
-    python generate_confusion_matrix_figures.py \\
+    python figures_s6_s8_confusion_matrices.py \\
         --experiment-dir <path_to_experiment_dir> \\
         --task-type suicidal_ideation \\
         --output-dir <output_path>

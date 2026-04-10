@@ -6,29 +6,29 @@ This script orchestrates the complete pipeline for generating all figures
 and data needed for the regulatory simulation paper revisions to address reviewer feedback..
 
 Main Figures:
-    Figure 3: Psychiatrist review breakdown (approved/modified/removed) - 3-panel barplot
-    Figure 4: Model performance metrics (parse rate, sens/spec/accuracy/f1)
-    Figure 5: P1/P2/P_harm risk analysis (failure_multiplier m values from config)
+    Figure 2: Psychiatrist review breakdown (approved/modified/removed) - 3-panel barplot
+    Figure 3: Model performance metrics (parse rate, sens/spec/accuracy/f1)
+    Figure 4: P1/P2/P_harm risk analysis (failure_multiplier m values from config)
 
-Supplementary Figures (manuscript S5-S13; folder names are historical):
-    Manuscript S5  (folder figure_S4/): Sankey diagrams (SI, therapy request, therapy engagement)
-    Manuscript S6-S8  (folder figures_S5-S7/): Binary confusion matrices
-    Manuscript S9-S11  (folder figures_S8-S10/): Per-statement accuracy heatmaps
+Supplementary Figures (manuscript S5-S13; folder names match manuscript numbers):
+    Manuscript S5  (folder figure_S5/): Sankey diagrams (SI, therapy request, therapy engagement)
+    Manuscript S6-S8  (folder figures_S6-S8/): Binary confusion matrices
+    Manuscript S9-S11  (folder figures_S9-S11/): Per-statement accuracy heatmaps
     Manuscript S12  (folder figure_S12/): Heatmap of adjusted FNR vs FNR_observed and M
-    Manuscript S13  (folder figure_S11/): P2 vs P(lack of care leading to harm) across failure multiplier M
+    Manuscript S13  (folder figure_S13/): P2 vs P(lack of care leading to harm) across failure multiplier M
 
 Output Structure:
     results/REGULATORY_SIMULATION_PAPER/[YYYYMMDD_HHMMSS]/
         README.md                        # Explains directory structure
         Figures/
-            figure_3.png                 # Psychiatrist review breakdown
-            figure_4.png                 # Model performance metrics
-            figure_5/                    # P1/P2/P_harm risk analysis
+            figure_2.png                 # Psychiatrist review breakdown
+            figure_3.png                 # Model performance metrics
+            figure_4.png                 # P1/P2/P_harm risk analysis
         Supplementary_Figures/
-            figure_S4/                   # Manuscript S5: Sankey diagrams
-            figures_S5-S7/               # Manuscript S6-S8: Binary confusion matrices
-            figures_S8-S10/              # Manuscript S9-S11: Per-statement accuracy heatmaps
-            figure_S11/                  # Manuscript S13: P2 across failure multiplier M
+            figure_S5/                   # Manuscript S5: Sankey diagrams
+            figures_S6-S8/               # Manuscript S6-S8: Binary confusion matrices
+            figures_S9-S11/              # Manuscript S9-S11: Per-statement accuracy heatmaps
+            figure_S13/                  # Manuscript S13: P2 across failure multiplier M
             figure_S12/                  # Manuscript S12: FNR adjustment heatmap
         Data/
             raw_data/
@@ -415,9 +415,9 @@ def run_python_script(
 # Figure Generation
 # =============================================================================
 
-def generate_figure_3(logger: logging.Logger, dry_run: bool = False) -> bool:
-    """Generate Figure 3: Psychiatrist Review Breakdown (3-panel barplot)."""
-    log_subsection(logger, "Figure 3: Psychiatrist Review Breakdown")
+def generate_figure_2(logger: logging.Logger, dry_run: bool = False) -> bool:
+    """Generate Figure 2: Psychiatrist Review Breakdown (3-panel barplot)."""
+    log_subsection(logger, "Figure 2: Psychiatrist Review Breakdown")
     
     script = ROOT / "analysis" / "data_validation" / "combined_three_panel_review_provenance.py"
     
@@ -438,10 +438,10 @@ def generate_figure_3(logger: logging.Logger, dry_run: bool = False) -> bool:
                 if timestamp_dirs:
                     src_file = timestamp_dirs[0] / "combined_three_panel_review.png"
                     if src_file.exists():
-                        dst_file = FIGURES_DIR / "figure_3.png"
+                        dst_file = FIGURES_DIR / "figure_2.png"
                         dst_file.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy(src_file, dst_file)
-                        logger.info(f"  ✅ Saved: Figures/figure_3.png")
+                        logger.info(f"  ✅ Saved: Figures/figure_2.png")
                         return True
         
         logger.warning(f"  ⚠️ Output not found after script completion")
@@ -450,13 +450,13 @@ def generate_figure_3(logger: logging.Logger, dry_run: bool = False) -> bool:
     return False
 
 
-def generate_figure_4(
+def generate_figure_3(
     filtered_csvs: Dict[str, Path],
     logger: logging.Logger, 
     dry_run: bool = False
 ) -> bool:
-    """Generate Figure 4: Model Performance Metrics."""
-    log_subsection(logger, "Figure 4: Model Performance Metrics")
+    """Generate Figure 3: Model Performance Metrics."""
+    log_subsection(logger, "Figure 3: Model Performance Metrics")
     
     script = ROOT / "analysis" / "comparative_analysis" / "multi_experiment_plot_transposed_provenance.py"
     
@@ -492,10 +492,10 @@ def generate_figure_4(
                 if timestamp_dirs:
                     src_file = timestamp_dirs[0] / "multi_model_performance.png"
                     if src_file.exists():
-                        dst_file = FIGURES_DIR / "figure_4.png"
+                        dst_file = FIGURES_DIR / "figure_3.png"
                         dst_file.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy(src_file, dst_file)
-                        logger.info(f"  ✅ Saved: Figures/figure_4.png")
+                        logger.info(f"  ✅ Saved: Figures/figure_3.png")
                         return True
         
         logger.warning(f"  ⚠️ Output not found after script completion")
@@ -504,16 +504,16 @@ def generate_figure_4(
     return False
 
 
-def generate_figure_5(
+def generate_figure_4(
     filtered_csvs: Dict[str, Path],
     logger: logging.Logger, 
     dry_run: bool = False
 ) -> bool:
-    """Generate Figure 5: P1/P2/P_harm Risk Analysis for m=1.0 (baseline).
+    """Generate Figure 4: P1/P2/P_harm Risk Analysis for m=1.0 (baseline).
     
-    Note: Manuscript Fig S13 (output figure_S11/) shows P2 across all failure multiplier values.
+    Note: Manuscript Fig S13 (output figure_S13/) shows P2 across all failure multiplier values.
     """
-    log_subsection(logger, "Figure 5: P1/P2/P_harm Risk Analysis")
+    log_subsection(logger, "Figure 4: P1/P2/P_harm Risk Analysis")
     
     script = ROOT / "analysis" / "comparative_analysis" / "p1_and_p2_plot_provenance.py"
     
@@ -522,7 +522,7 @@ def generate_figure_5(
     tr_csv = filtered_csvs['therapy_request']
     te_csv = filtered_csvs['therapy_engagement']
     
-    m = 1.0  # Only generate m=1.0 for Figure 5 (manuscript S13 / figure_S11 shows all M values)
+    m = 1.0  # Only generate m=1.0 for Figure 4 (manuscript S13 / figure_S13 shows all M values)
     logger.info(f"  Generating m = {m}...")
     
     args = [
@@ -532,6 +532,7 @@ def generate_figure_5(
         "--failure-multiplier", str(m),
         "--n-mc-samples", "50000",
         "--uncertainty-style", "both",
+        "--output-name", "figure_4",
     ]
     
     if dry_run:
@@ -549,11 +550,10 @@ def generate_figure_5(
                 timestamp_dirs = sorted([d for d in date_dirs[0].iterdir() if d.is_dir()], key=lambda x: x.name, reverse=True)
                 if timestamp_dirs:
                     src_output_dir = timestamp_dirs[0]
-                    # Copy figure_5.png
-                    src_png = src_output_dir / 'figure_5.png'
+                    src_png = src_output_dir / "figure_4.png"
                     if src_png.exists():
-                        shutil.copy(src_png, FIGURES_DIR / src_png.name)
-                        logger.info(f"    ✅ Saved: Figures/{src_png.name}")
+                        shutil.copy(src_png, FIGURES_DIR / "figure_4.png")
+                        logger.info(f"    ✅ Saved: Figures/figure_4.png")
                     
                     # Copy CSV to Data/processed_data/correlated_failure_analysis/
                     for csv_file in src_output_dir.glob('p1_p2*.csv'):
@@ -565,13 +565,19 @@ def generate_figure_5(
     return success
 
 
-def generate_figure_s4(logger: logging.Logger, dry_run: bool = False) -> bool:
-    """Generate Figure S4: Sankey Diagrams."""
-    log_subsection(logger, "Figure S4: Sankey Diagrams")
+def generate_figure_s5(logger: logging.Logger, dry_run: bool = False) -> bool:
+    """Generate manuscript Figure S5: Sankey diagrams (one folder, three PNGs)."""
+    log_subsection(logger, "Figure S5: Sankey Diagrams")
     
-    script = ROOT / "analysis" / "data_validation" / "sankey_diagram_configs.py"
-    output_dir = SUPP_FIGURES_DIR / "figure_S4"
+    script = ROOT / "analysis" / "data_validation" / "figure_s5_sankey_diagrams.py"
+    output_dir = SUPP_FIGURES_DIR / "figure_S5"
     output_dir.mkdir(parents=True, exist_ok=True)
+    
+    sankey_png_to_figure_s5 = {
+        "si_psychiatrist_review_sankey.png": "figure_S5_si.png",
+        "therapy_request_psychiatrist_review_sankey.png": "figure_S5_therapy_request.png",
+        "therapy_engagement_psychiatrist_review_sankey.png": "figure_S5_therapy_engagement.png",
+    }
     
     experiments = ['si', 'therapy_request', 'therapy_engagement']
     all_success = True
@@ -601,9 +607,10 @@ def generate_figure_s4(logger: logging.Logger, dry_run: bool = False) -> bool:
                         src_exp_dir = exp_dirs[0]
                         for f in src_exp_dir.iterdir():
                             if f.is_file() and f.name.endswith('.png'):
-                                dst_file = output_dir / f.name
+                                dst_name = sankey_png_to_figure_s5.get(f.name, f.name)
+                                dst_file = output_dir / dst_name
                                 shutil.copy(f, dst_file)
-                                logger.info(f"    ✅ Saved: figure_S4/{f.name}")
+                                logger.info(f"    ✅ Saved: figure_S5/{dst_name}")
         else:
             all_success = False
     
@@ -615,20 +622,20 @@ def generate_confusion_matrices(
     logger: logging.Logger,
     dry_run: bool = False
 ) -> bool:
-    """Generate Figures S5-S7: Binary Confusion Matrices (consolidated into one folder)."""
-    log_subsection(logger, "Figures S5-S7: Confusion Matrices")
+    """Generate manuscript Figures S6-S8: binary confusion matrices (one folder, three PNGs)."""
+    log_subsection(logger, "Figures S6-S8: Confusion Matrices")
     
-    script = ROOT / "analysis" / "model_performance" / "generate_confusion_matrix_figures.py"
+    script = ROOT / "analysis" / "model_performance" / "figures_s6_s8_confusion_matrices.py"
     
     # Consolidated output directory for all confusion matrices
-    output_dir = SUPP_FIGURES_DIR / "figures_S5-S7"
+    output_dir = SUPP_FIGURES_DIR / "figures_S6-S8"
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Map task to figure number: SI=S5, TR=S6, TE=S7
+    # Map task to manuscript figure filename
     task_figure_map = {
-        'suicidal_ideation': ('SI', 'figure_S5.png'),
-        'therapy_request': ('Therapy Request', 'figure_S6.png'),
-        'therapy_engagement': ('Therapy Engagement', 'figure_S7.png'),
+        'suicidal_ideation': ('SI', 'figure_S6.png'),
+        'therapy_request': ('Therapy Request', 'figure_S7.png'),
+        'therapy_engagement': ('Therapy Engagement', 'figure_S8.png'),
     }
     
     all_success = True
@@ -652,7 +659,7 @@ def generate_confusion_matrices(
         success = run_python_script(script, args, logger, dry_run=dry_run)
         
         if success:
-            # Rename to figure_S5/S6/S7.png
+            # Rename to figure_S6/S7/S8.png
             old_name = output_dir / f"{task_name}_binary_confusion_matrix_grid.png"
             new_name = output_dir / figure_name
             if old_name.exists():
@@ -669,7 +676,7 @@ def generate_confusion_matrices(
             shutil.rmtree(subdir)
     
     if all_success and not dry_run:
-        logger.info(f"  ✅ All confusion matrices saved to: figures_S5-S7/")
+        logger.info(f"  ✅ All confusion matrices saved to: figures_S6-S8/")
     
     return all_success
 
@@ -679,15 +686,15 @@ def generate_heatmaps(
     logger: logging.Logger,
     dry_run: bool = False
 ) -> bool:
-    """Generate Figures S8-S10: Per-statement Accuracy Heatmaps (consolidated into one folder)."""
-    log_subsection(logger, "Figures S8-S10: Accuracy Heatmaps")
+    """Generate manuscript Figures S9-S11: per-statement accuracy heatmaps (one folder, three PNGs)."""
+    log_subsection(logger, "Figures S9-S11: Accuracy Heatmaps")
     
     # First generate the correctness matrices
-    matrix_script = ROOT / "analysis" / "model_performance" / "generate_model_statement_matrices.py"
-    heatmap_script = ROOT / "analysis" / "model_performance" / "generate_all_heatmaps.py"
+    matrix_script = ROOT / "analysis" / "model_performance" / "figures_s9_s11_correctness_matrices.py"
+    heatmap_script = ROOT / "analysis" / "model_performance" / "figures_s9_s11_heatmaps.py"
     
     # Consolidated output directory
-    output_dir = SUPP_FIGURES_DIR / "figures_S8-S10"
+    output_dir = SUPP_FIGURES_DIR / "figures_S9-S11"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Map task names to filename prefixes (for finding heatmap output files)
@@ -723,7 +730,7 @@ def generate_heatmaps(
         return False
     
     # Step 3: Copy outputs to consolidated supplementary figure directory
-    logger.info("  Step 3: Copying outputs to figures_S8-S10/...")
+    logger.info("  Step 3: Copying outputs to figures_S9-S11/...")
     
     # Heatmaps are saved to results/model_performance_analysis/{date}/{timestamp_heatmapname}/
     # Each heatmap gets its own timestamped directory
@@ -741,11 +748,11 @@ def generate_heatmaps(
     
     date_dir = date_dirs[0]
     
-    # Map task names to final figure names: SI=S8, TR=S9, TE=S10
+    # Map task names to final figure names (manuscript S9, S10, S11)
     task_to_figure = {
-        'suicidal_ideation': 'figure_S8.png',
-        'therapy_request': 'figure_S9.png',
-        'therapy_engagement': 'figure_S10.png',
+        'suicidal_ideation': 'figure_S9.png',
+        'therapy_request': 'figure_S10.png',
+        'therapy_engagement': 'figure_S11.png',
     }
     
     # Copy each heatmap to the consolidated figure directory
@@ -782,25 +789,25 @@ def generate_heatmaps(
             all_success = False
     
     if all_success:
-        logger.info(f"  ✅ All heatmaps saved to: figures_S8-S10/")
+        logger.info(f"  ✅ All heatmaps saved to: figures_S9-S11/")
     
     return all_success
 
 
-def generate_figure_s11(
+def generate_figure_s13(
     filtered_csvs: Dict[str, Path],
     logger: logging.Logger,
     dry_run: bool = False
 ) -> bool:
-    """Generate manuscript Figure S13 (output folder figure_S11): P2 by harm prevalence across M.
+    """Generate manuscript Figure S13: P2 by harm prevalence across M.
     
     Shows how P2 varies with harm prevalence at different failure multiplier (M) values.
-    Uses the same underlying data as Figure 5 but shows all M values in a single facet plot.
+    Uses the same underlying data as Figure 4 but shows all M values in a single facet plot.
     """
-    log_subsection(logger, "Manuscript Fig S13 (figure_S11): P2 Across M Values")
+    log_subsection(logger, "Manuscript Fig S13: P2 Across M Values")
     
-    script = ROOT / "analysis" / "comparative_analysis" / "figure_s11_p2_by_model_size_across_m.py"
-    output_dir = SUPP_FIGURES_DIR / "figure_S11"
+    script = ROOT / "analysis" / "comparative_analysis" / "figure_s13_p2_by_model_size_across_m.py"
+    output_dir = SUPP_FIGURES_DIR / "figure_S13"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     args = [
@@ -813,12 +820,11 @@ def generate_figure_s11(
     success = run_python_script(script, args, logger, dry_run=dry_run)
     
     if success and not dry_run:
-        # Rename the output file to figure_S11.png
-        old_name = output_dir / "figure_s11_p2_across_m_values.png"
-        new_name = output_dir / "figure_S11.png"
+        old_name = output_dir / "figure_s13_p2_across_m_values.png"
+        new_name = output_dir / "figure_S13.png"
         if old_name.exists():
             old_name.rename(new_name)
-            logger.info(f"  ✅ Saved: figure_S11/figure_S11.png")
+            logger.info(f"  ✅ Saved: figure_S13/figure_S13.png")
         else:
             logger.warning(f"  ⚠️ Output not found: {old_name.name}")
         
@@ -1165,20 +1171,20 @@ def extract_provenance_from_pngs(logger: logging.Logger, dry_run: bool = False) 
     # Define all PNG files to extract from
     png_files = [
         # Main figures
+        (FIGURES_DIR / "figure_2.png", "figure_2"),
         (FIGURES_DIR / "figure_3.png", "figure_3"),
         (FIGURES_DIR / "figure_4.png", "figure_4"),
-        (FIGURES_DIR / "figure_5.png", "figure_5"),
         # Supplementary figures
-        (SUPP_FIGURES_DIR / "figure_S4" / "si_psychiatrist_review_sankey.png", "figure_S4_si"),
-        (SUPP_FIGURES_DIR / "figure_S4" / "therapy_request_psychiatrist_review_sankey.png", "figure_S4_therapy_request"),
-        (SUPP_FIGURES_DIR / "figure_S4" / "therapy_engagement_psychiatrist_review_sankey.png", "figure_S4_therapy_engagement"),
-        (SUPP_FIGURES_DIR / "figures_S5-S7" / "figure_S5.png", "figure_S5"),
-        (SUPP_FIGURES_DIR / "figures_S5-S7" / "figure_S6.png", "figure_S6"),
-        (SUPP_FIGURES_DIR / "figures_S5-S7" / "figure_S7.png", "figure_S7"),
-        (SUPP_FIGURES_DIR / "figures_S8-S10" / "figure_S8.png", "figure_S8"),
-        (SUPP_FIGURES_DIR / "figures_S8-S10" / "figure_S9.png", "figure_S9"),
-        (SUPP_FIGURES_DIR / "figures_S8-S10" / "figure_S10.png", "figure_S10"),
-        (SUPP_FIGURES_DIR / "figure_S11" / "figure_S11.png", "figure_S11"),
+        (SUPP_FIGURES_DIR / "figure_S5" / "figure_S5_si.png", "figure_S5_si"),
+        (SUPP_FIGURES_DIR / "figure_S5" / "figure_S5_therapy_request.png", "figure_S5_therapy_request"),
+        (SUPP_FIGURES_DIR / "figure_S5" / "figure_S5_therapy_engagement.png", "figure_S5_therapy_engagement"),
+        (SUPP_FIGURES_DIR / "figures_S6-S8" / "figure_S6.png", "figure_S6"),
+        (SUPP_FIGURES_DIR / "figures_S6-S8" / "figure_S7.png", "figure_S7"),
+        (SUPP_FIGURES_DIR / "figures_S6-S8" / "figure_S8.png", "figure_S8"),
+        (SUPP_FIGURES_DIR / "figures_S9-S11" / "figure_S9.png", "figure_S9"),
+        (SUPP_FIGURES_DIR / "figures_S9-S11" / "figure_S10.png", "figure_S10"),
+        (SUPP_FIGURES_DIR / "figures_S9-S11" / "figure_S11.png", "figure_S11"),
+        (SUPP_FIGURES_DIR / "figure_S13" / "figure_S13.png", "figure_S13"),
         (SUPP_FIGURES_DIR / "figure_S12" / "figure_S12.png", "figure_S12"),
     ]
     
@@ -1240,15 +1246,15 @@ This directory contains all figures, data, and logs generated by the regulatory 
 {PAPER_OUTPUT_BASE.name}/
 ├── README.md                    # This file
 ├── Figures/                     # Main manuscript figures
-│   ├── figure_3.png            # Psychiatrist review breakdown (approved/modified/removed)
-│   ├── figure_4.png            # Model performance metrics (parse rate, sensitivity, specificity, accuracy, F1)
-│   └── figure_5/               # P1/P2/P_harm risk analysis across failure multiplier values
+│   ├── figure_2.png            # Psychiatrist review breakdown (approved/modified/removed)
+│   ├── figure_3.png            # Model performance metrics (parse rate, sensitivity, specificity, accuracy, F1)
+│   └── figure_4.png            # P1/P2/P_harm risk analysis across failure multiplier values
 │
 ├── Supplementary_Figures/       # Supplementary figures (manuscript S5-S13; see repo README Figure Guide)
-│   ├── figure_S4/              # Manuscript S5: Sankey diagrams (ground truth → model prediction flows)
-│   ├── figures_S5-S7/          # Manuscript S6-S8: Binary confusion matrices (SI, TR, TE)
-│   ├── figures_S8-S10/         # Manuscript S9-S11: Per-statement accuracy heatmaps
-│   ├── figure_S11/             # Manuscript S13: P2 across failure multiplier (M) values
+│   ├── figure_S5/              # Manuscript S5: Sankey diagrams (ground truth → model prediction flows)
+│   ├── figures_S6-S8/          # Manuscript S6-S8: Binary confusion matrices (SI, TR, TE)
+│   ├── figures_S9-S11/         # Manuscript S9-S11: Per-statement accuracy heatmaps
+│   ├── figure_S13/             # Manuscript S13: P2 across failure multiplier (M) values
 │   └── figure_S12/             # Manuscript S12: Adjusted FNR heatmap (M vs observed FNR)
 │
 ├── Data/
@@ -1287,19 +1293,19 @@ This directory contains all figures, data, and logs generated by the regulatory 
     │   └── *_audit_summary.json           # Audit provenance (verification summaries)
     └── Audits/                 # Detailed audit reports (CSV)
         ├── cache_audit_report.csv              # Cache integrity check
-        ├── confusion_matrix_audit_report.csv   # Fig 4 + manuscript S6-S8 verification
+        ├── confusion_matrix_audit_report.csv   # Fig 3 + manuscript S6-S8 verification
         ├── heatmap_audit_report.csv            # Manuscript S9-S11 verification
-        └── figure_s11_audit_report.csv         # Manuscript S13 (figure_S11 output) verification
+        └── figure_s13_audit_report.csv         # Manuscript S13 verification
 ```
 
 ## Key Files
 
 ### Figures
-- **figure_3.png**: Shows psychiatrist review outcomes for each task
-- **figure_4.png**: Model performance comparison with binary classification metrics
-- **figure_5/**: Risk analysis showing P1, P2, and P_harm across model sizes
+- **figure_2.png**: Shows psychiatrist review outcomes for each task
+- **figure_3.png**: Model performance comparison with binary classification metrics
+- **figure_4.png**: Risk analysis showing P1, P2, and P_harm across model sizes
 - **figure_S12/figure_S12.png**: Manuscript **S12** — adjusted FNR vs observed FNR and failure multiplier *M*
-- **figure_S11/figure_S11.png**: Manuscript **S13** — P2 across failure-multiplier *M* values
+- **figure_S13/figure_S13.png**: Manuscript **S13** — P2 across failure-multiplier *M* values
 
 ### Tables
 - **processed_data/supplementary_tables/**: Manuscript **S1–S3** (review counts + `Post_downsampling_n` from finalized inputs)
@@ -1490,19 +1496,19 @@ def run_pipeline(args: argparse.Namespace) -> int:
     # Generate figures
     log_section(logger, "GENERATING MAIN FIGURES")
     
-    if not generate_figure_3(logger, args.dry_run):
+    if not generate_figure_2(logger, args.dry_run):
+        success = False
+    
+    if not generate_figure_3(filtered_csvs, logger, args.dry_run):
         success = False
     
     if not generate_figure_4(filtered_csvs, logger, args.dry_run):
         success = False
     
-    if not generate_figure_5(filtered_csvs, logger, args.dry_run):
-        success = False
-    
     # Generate supplementary figures
     log_section(logger, "GENERATING SUPPLEMENTARY FIGURES")
     
-    if not generate_figure_s4(logger, args.dry_run):
+    if not generate_figure_s5(logger, args.dry_run):
         success = False
     
     if not generate_confusion_matrices(experiment_dirs, logger, args.dry_run):
@@ -1511,7 +1517,7 @@ def run_pipeline(args: argparse.Namespace) -> int:
     if not generate_heatmaps(experiment_dirs, logger, args.dry_run):
         success = False
     
-    if not generate_figure_s11(filtered_csvs, logger, args.dry_run):
+    if not generate_figure_s13(filtered_csvs, logger, args.dry_run):
         success = False
 
     if not generate_figure_s12(logger, args.dry_run):
@@ -1626,8 +1632,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
         except Exception as e:
             logger.warning(f"  ⚠️ Cache audit failed (non-critical): {e}")
         
-        # Confusion Matrix Audit (Figures 4, S5-S7)
-        logger.info("  Running confusion matrix audit (Figures 4, S5-S7)...")
+        # Confusion Matrix Audit (Figure 3 + manuscript S6-S8)
+        logger.info("  Running confusion matrix audit (Figure 3 + manuscript S6-S8)...")
         cm_audit_script = ROOT / "utilities" / "confusion_matrix_audit.py"
         cm_audit_args = [
             "--paper-run-dir", str(PAPER_OUTPUT_BASE),
@@ -1640,8 +1646,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
         else:
             logger.warning(f"  ⚠️ Confusion matrix audit FAILED - review report")
         
-        # Heatmap Audit (Figures S8-S10)
-        logger.info("  Running heatmap audit (Figures S8-S10)...")
+        # Heatmap Audit (manuscript S9-S11)
+        logger.info("  Running heatmap audit (manuscript S9-S11)...")
         hm_audit_script = ROOT / "utilities" / "heatmap_audit.py"
         hm_audit_args = [
             "--paper-run-dir", str(PAPER_OUTPUT_BASE),
@@ -1653,18 +1659,18 @@ def run_pipeline(args: argparse.Namespace) -> int:
         else:
             logger.warning(f"  ⚠️ Heatmap audit FAILED - review report")
         
-        # Manuscript Fig S13 audit (output figure_S11; P2 across M values)
-        logger.info("  Running manuscript Fig S13 audit (figure_S11 output, P2 across M values)...")
-        s11_audit_script = ROOT / "utilities" / "figure_s11_audit.py"
-        s11_audit_args = [
+        # Manuscript Fig S13 audit (P2 across M values)
+        logger.info("  Running manuscript Fig S13 audit...")
+        s13_audit_script = ROOT / "utilities" / "figure_s13_audit.py"
+        s13_audit_args = [
             "--paper-run-dir", str(PAPER_OUTPUT_BASE),
-            "--output", str(audits_dir / "figure_s11_audit_report.csv"),
+            "--output", str(audits_dir / "figure_s13_audit_report.csv"),
         ]
-        s11_audit_success = run_python_script(s11_audit_script, s11_audit_args, logger, dry_run=args.dry_run)
-        if s11_audit_success:
-            logger.info(f"  ✅ Manuscript Fig S13 (figure_S11) audit passed")
+        s13_audit_success = run_python_script(s13_audit_script, s13_audit_args, logger, dry_run=args.dry_run)
+        if s13_audit_success:
+            logger.info(f"  ✅ Manuscript Fig S13 audit passed")
         else:
-            logger.warning(f"  ⚠️ Manuscript Fig S13 (figure_S11) audit FAILED - review report")
+            logger.warning(f"  ⚠️ Manuscript Fig S13 audit FAILED - review report")
         
         logger.info(f"  ✅ Audit reports saved to: {audits_dir}")
     else:

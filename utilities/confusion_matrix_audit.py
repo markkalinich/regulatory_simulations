@@ -6,8 +6,8 @@ Independently verifies all classification metrics by querying the cache database
 directly and comparing to reported values in comprehensive_metrics.csv files.
 
 This script provides an audit trail for:
-- Figure 4: Model Performance Metrics (parse rate, sensitivity, specificity, accuracy, F1)
-- Figures S5-S7: Binary Confusion Matrices (TP, TN, FP, FN)
+- Figure 3: Model Performance Metrics (parse rate, sensitivity, specificity, accuracy, F1)
+- Figures S6-S8: Binary Confusion Matrices (TP, TN, FP, FN)
 
 The audit verifies that:
 1. All TP/TN/FP/FN values match cache data exactly
@@ -273,23 +273,23 @@ def load_figure_provenance(paper_run_dir: Path, figure_name: str) -> Optional[Di
     return None
 
 
-def verify_figure_4_provenance(paper_run_dir: Path) -> Dict[str, any]:
+def verify_figure_3_provenance(paper_run_dir: Path) -> Dict[str, any]:
     """
-    Verify Figure 4 provenance - check that input file hashes match.
+    Verify Figure 3 (model performance) provenance - check that input file hashes match.
     
     Returns dict with verification results.
     """
     results = {
-        'figure_4_provenance_found': False,
+        'figure_3_provenance_found': False,
         'file_hash_checks': [],
         'all_hashes_match': None,
     }
     
-    provenance = load_figure_provenance(paper_run_dir, 'figure_4')
+    provenance = load_figure_provenance(paper_run_dir, 'figure_3')
     if not provenance:
         return results
     
-    results['figure_4_provenance_found'] = True
+    results['figure_3_provenance_found'] = True
     results['generated_at'] = provenance.get('generated_at')
     
     all_match = True
@@ -360,21 +360,21 @@ def run_audit(
     Run full audit comparing cache data to reported metrics.
     
     Verifies:
-    - Figure 4: Performance metrics (parse rate, sensitivity, specificity, accuracy, F1)
-    - Figures S5-S7: Confusion matrix values (TP, TN, FP, FN)
+    - Figure 3: Performance metrics (parse rate, sensitivity, specificity, accuracy, F1)
+    - Figures S6-S8: Confusion matrix values (TP, TN, FP, FN)
     
     Returns DataFrame with audit results.
     """
     print("=" * 70)
-    print("FIGURE 4 & FIGURES S5-S7 AUDIT")
+    print("FIGURE 3 & FIGURES S6-S8 AUDIT")
     print("=" * 70)
     print(f"Cache: {cache_dir}")
     print(f"Paper run: {paper_run_dir}")
     print(f"Output: {output_path}")
     print()
     print("This audit verifies:")
-    print("  - Figure 4: Model performance metrics (sensitivity, specificity, etc.)")
-    print("  - Figures S5-S7: Binary confusion matrices (TP, TN, FP, FN)")
+    print("  - Figure 3: Model performance metrics (sensitivity, specificity, etc.)")
+    print("  - Figures S6-S8: Binary confusion matrices (TP, TN, FP, FN)")
     print()
     
     # Connect to cache
@@ -529,18 +529,18 @@ def run_audit(
     # Create DataFrame and save
     audit_df = pd.DataFrame(audit_results)
     
-    # Verify Figure 4 provenance
+    # Verify Figure 3 provenance (model performance panel)
     print("\n" + "=" * 70)
-    print("FIGURE 4 PROVENANCE VERIFICATION")
+    print("FIGURE 3 PROVENANCE VERIFICATION")
     print("=" * 70)
     
-    fig4_verification = verify_figure_4_provenance(paper_run_dir)
+    fig3_verification = verify_figure_3_provenance(paper_run_dir)
     
-    if fig4_verification['figure_4_provenance_found']:
-        print(f"Figure 4 generated at: {fig4_verification.get('generated_at', 'Unknown')}")
+    if fig3_verification['figure_3_provenance_found']:
+        print(f"Figure 3 generated at: {fig3_verification.get('generated_at', 'Unknown')}")
         print(f"\nInput file hash verification:")
         
-        for check in fig4_verification['file_hash_checks']:
+        for check in fig3_verification['file_hash_checks']:
             if check['hash_matches'] is True:
                 print(f"  ✅ {check['file']}: Hash matches")
             elif check['hash_matches'] is False:
@@ -550,12 +550,12 @@ def run_audit(
             else:
                 print(f"  ⚠️  {check['file']}: Could not verify")
         
-        if fig4_verification['all_hashes_match']:
-            print("\n✅ Figure 4 input files verified")
-        elif fig4_verification['all_hashes_match'] is False:
-            print("\n⚠️  Figure 4 input files have changed since generation")
+        if fig3_verification['all_hashes_match']:
+            print("\n✅ Figure 3 input files verified")
+        elif fig3_verification['all_hashes_match'] is False:
+            print("\n⚠️  Figure 3 input files have changed since generation")
     else:
-        print("⚠️  Figure 4 provenance not found - cannot verify input file hashes")
+        print("⚠️  Figure 3 provenance not found - cannot verify input file hashes")
     
     # Add summary statistics
     print("\n" + "=" * 70)
@@ -575,7 +575,7 @@ def run_audit(
     print(f"  Failed: {failed}")
     
     # Show metrics verification (these are derived from TP/TN/FP/FN)
-    print(f"\nDerived metrics verified (used in Figure 4):")
+    print(f"\nDerived metrics verified (used in Figure 3):")
     print(f"  - parse_success_rate: ✅ Verified (calculated from successful_parses / total_samples)")
     print(f"  - sensitivity: ✅ Verified (calculated from TP / (TP + FN))")
     print(f"  - specificity: ✅ Verified (calculated from TN / (TN + FP))")
@@ -587,8 +587,8 @@ def run_audit(
         print("✅ ALL METRICS VERIFIED")
         print("=" * 70)
         print("Cache data matches reported values exactly for:")
-        print("  - Figure 4: All performance metrics")
-        print("  - Figures S5-S7: All confusion matrix values")
+        print("  - Figure 3: All performance metrics")
+        print("  - Figures S6-S8: All confusion matrix values")
     else:
         print("\n" + "=" * 70)
         print(f"❌ {failed} MISMATCHES FOUND")
@@ -605,12 +605,12 @@ def run_audit(
         'audit_timestamp': datetime.now().isoformat(),
         'cache_dir': cache_dir,
         'paper_run_dir': str(paper_run_dir),
-        'figures_verified': ['Figure 4', 'Figure S5', 'Figure S6', 'Figure S7'],
+        'figures_verified': ['Figure 3', 'Figure S6', 'Figure S7', 'Figure S8'],
         'total_model_task_combinations': total_comparisons,
         'passed': int(passed),
         'failed': int(failed),
         'all_passed': failed == 0,
-        'figure_4_provenance': fig4_verification,
+        'figure_3_provenance': fig3_verification,
         'metrics_verified': [
             'TP', 'TN', 'FP', 'FN',
             'parse_success_rate', 'sensitivity', 'specificity', 'accuracy', 'f1_score'

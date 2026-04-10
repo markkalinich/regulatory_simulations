@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Figure S11 Audit Script
+Figure S13 Audit Script
 
-Independently verifies Figure S11 (P2 across failure multiplier values) by:
+Independently verifies manuscript Figure S13 (P2 across failure multiplier values) by:
 
 1. Loading FN/total_positive from comprehensive_metrics.csv (therapy_engagement)
 2. Independently calculating P2 using the SAME Monte Carlo approach as the pipeline
@@ -17,12 +17,12 @@ The FNR samples come from Beta(α + fn, α + tp) where α=1.0 (uniform prior).
 The reported "risk_probability" is the MEDIAN of these Monte Carlo samples.
 
 Usage:
-    python utilities/figure_s11_audit.py --paper-run-dir <path_to_pipeline_output>
-    python utilities/figure_s11_audit.py  # Uses most recent pipeline run
+    python utilities/figure_s13_audit.py --paper-run-dir <path_to_pipeline_output>
+    python utilities/figure_s13_audit.py  # Uses most recent pipeline run
 
 Output:
-    figure_s11_audit_report.csv - Detailed comparison for each (model, M, baseline_pct)
-    figure_s11_audit_summary.json - Summary with pass/fail status
+    figure_s13_audit_report.csv - Detailed comparison for each (model, M, baseline_pct)
+    figure_s13_audit_summary.json - Summary with pass/fail status
 """
 
 import argparse
@@ -238,12 +238,12 @@ def normalize_family(family: str) -> str:
 
 def run_audit(paper_run_dir: Path, output_path: Path) -> pd.DataFrame:
     """
-    Run Figure S11 audit.
+    Run Figure S13 audit.
     
     Returns DataFrame with audit results.
     """
     print("=" * 70)
-    print("FIGURE S11 AUDIT: P2 ACROSS FAILURE MULTIPLIER VALUES")
+    print("FIGURE S13 AUDIT: P2 ACROSS FAILURE MULTIPLIER VALUES")
     print("=" * 70)
     print(f"Paper run: {paper_run_dir}")
     print(f"Output: {output_path}")
@@ -425,7 +425,7 @@ def run_audit(paper_run_dir: Path, output_path: Path) -> pd.DataFrame:
     
     if all_passed and total_checks > 0:
         print("\n" + "=" * 70)
-        print("✅ FIGURE S11 VERIFIED")
+        print("✅ FIGURE S13 VERIFIED")
         print("=" * 70)
         print("All P2 calculations match reported values within tolerance.")
         print(f"(Tolerance: {RELATIVE_TOLERANCE*100}% relative or {ABSOLUTE_TOLERANCE} absolute)")
@@ -444,7 +444,7 @@ def run_audit(paper_run_dir: Path, output_path: Path) -> pd.DataFrame:
     summary = {
         'audit_timestamp': datetime.now().isoformat(),
         'paper_run_dir': str(paper_run_dir),
-        'figure_verified': 'Figure S11',
+        'figure_verified': 'Figure S13',
         'total_data_points': total_checks,
         'passed': total_passed,
         'failed': total_failed,
@@ -466,7 +466,7 @@ def run_audit(paper_run_dir: Path, output_path: Path) -> pd.DataFrame:
     # Save JSON summary to figure_provenance (provenance info)
     provenance_dir = output_path.parent.parent / 'figure_provenance'
     provenance_dir.mkdir(parents=True, exist_ok=True)
-    summary_path = provenance_dir / 'figure_s11_audit_summary.json'
+    summary_path = provenance_dir / 'figure_s13_audit_summary.json'
     with open(summary_path, 'w') as f:
         json.dump(summary, f, indent=2, default=str)
     print(f"Audit summary saved to: {summary_path}")
@@ -493,7 +493,7 @@ def find_latest_paper_run() -> Optional[Path]:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Audit Figure S11: P2 across failure multiplier values"
+        description="Audit Figure S13: P2 across failure multiplier values"
     )
     parser.add_argument(
         '--paper-run-dir',
@@ -505,7 +505,7 @@ def main():
         '--output',
         type=str,
         default=None,
-        help='Output CSV path (default: figure_s11_audit_report.csv in provenance folder)'
+        help='Output CSV path (default: figure_s13_audit_report.csv in provenance folder)'
     )
     
     args = parser.parse_args()
@@ -527,7 +527,7 @@ def main():
     if args.output:
         output_path = Path(args.output)
     else:
-        output_path = paper_run_dir / 'Logs' / 'Audits' / 'figure_s11_audit_report.csv'
+        output_path = paper_run_dir / 'Logs' / 'Audits' / 'figure_s13_audit_report.csv'
     
     # Run audit
     try:

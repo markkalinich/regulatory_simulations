@@ -614,7 +614,7 @@ if __name__ == '__main__':
             config = THERAPY_ENGAGEMENT_CONFIG
         else:
             print(f"Unknown experiment type: {experiment_type}")
-            print("Usage: python sankey_diagram_configs.py [si|therapy_request|therapy_engagement]")
+            print("Usage: python figure_s5_sankey_diagrams.py [si|therapy_request|therapy_engagement]")
             sys.exit(1)
     else:
         # Default to SI if no argument provided

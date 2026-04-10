@@ -591,7 +591,7 @@ def create_p1_p2_risk_plot(suicide_csv, therapy_request_csv, therapy_engagement_
     plot_data['normalized_family'] = plot_data['model_family'].apply(normalize_family)
     
     # Save computed P1/P2/P_harm values to CSV for reproducibility and verification
-    output_name_base = params.get('output_name', 'figure_5')
+    output_name_base = params.get('output_name', 'figure_4')
     csv_filename = f"p1_p2_p_harm_values_m_{failure_multiplier}.csv"
     csv_output_path = tracker.get_output_path(csv_filename)
     plot_data.to_csv(csv_output_path, index=False)
@@ -748,7 +748,7 @@ def create_p1_p2_risk_plot(suicide_csv, therapy_request_csv, therapy_engagement_
     plt.tight_layout()
     
     # Save outputs using provenance tracker
-    output_name = params.get('output_name', 'figure_5')
+    output_name = params.get('output_name', 'figure_4')
     output_filename = f"{output_name}.png"
     
     output_png = tracker.get_output_path(output_filename)
@@ -821,8 +821,8 @@ def main():
                             f"(default: {DEFAULT_PARAMS['uncertainty_style']})")
     parser.add_argument('--include-p-harm', action='store_true',
                        help="Include P_harm (3rd row) in the figure. Default: only P1 and P2 rows.")
-    parser.add_argument('--output-name', type=str, default='figure_5',
-                       help="Base name for output files (default: figure_5)")
+    parser.add_argument('--output-name', type=str, default='figure_4',
+                       help="Base name for output files (default: figure_4)")
     
     args = parser.parse_args()
     

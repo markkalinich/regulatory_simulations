@@ -13,9 +13,9 @@
 
 ## File Naming
 
-- **Python files**: snake_case (`generate_confusion_matrix_figures.py`)
+- **Python files**: snake_case (e.g. `figures_s6_s8_confusion_matrices.py`, `figure_s5_sankey_diagrams.py`)
 - **Data files**: snake_case with descriptive names
-- **Figures**: lowercase with underscores (`figure_3.png`, `si_correctness_heatmap.png`)
+- **Figures**: lowercase with underscores (`figure_2.png`, `figure_3.png`, `figure_4.png`, `si_correctness_heatmap.png`)
 
 ## Standard DataFrame Columns
 
