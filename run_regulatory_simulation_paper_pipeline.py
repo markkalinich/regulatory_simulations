@@ -10,6 +10,10 @@ Main Figures:
     Figure 3: Model performance metrics (parse rate, sens/spec/accuracy/f1)
     Figure 4: P1/P2/P_harm risk analysis (failure_multiplier m values from config)
 
+Publication export:
+    Final figure PNGs are retained for provenance extraction and internal verification.
+    Matching 300 dpi TIFF copies are exported for manuscript submission.
+
 Supplementary Figures (manuscript S5-S13; folder names match manuscript numbers):
     Manuscript S5  (folder figure_S5/): Sankey diagrams (SI, therapy request, therapy engagement)
     Manuscript S6-S8  (folder figures_S6-S8/): Binary confusion matrices
@@ -1150,6 +1154,28 @@ def collect_model_info(
     return True
 
 
+def get_final_figure_pngs() -> List[Tuple[Path, str]]:
+    """Return all final PNG figure paths and their provenance slugs."""
+    return [
+        # Main figures
+        (FIGURES_DIR / "figure_2.png", "figure_2"),
+        (FIGURES_DIR / "figure_3.png", "figure_3"),
+        (FIGURES_DIR / "figure_4.png", "figure_4"),
+        # Supplementary figures
+        (SUPP_FIGURES_DIR / "figure_S5" / "figure_S5_si.png", "figure_S5_si"),
+        (SUPP_FIGURES_DIR / "figure_S5" / "figure_S5_therapy_request.png", "figure_S5_therapy_request"),
+        (SUPP_FIGURES_DIR / "figure_S5" / "figure_S5_therapy_engagement.png", "figure_S5_therapy_engagement"),
+        (SUPP_FIGURES_DIR / "figures_S6-S8" / "figure_S6.png", "figure_S6"),
+        (SUPP_FIGURES_DIR / "figures_S6-S8" / "figure_S7.png", "figure_S7"),
+        (SUPP_FIGURES_DIR / "figures_S6-S8" / "figure_S8.png", "figure_S8"),
+        (SUPP_FIGURES_DIR / "figures_S9-S11" / "figure_S9.png", "figure_S9"),
+        (SUPP_FIGURES_DIR / "figures_S9-S11" / "figure_S10.png", "figure_S10"),
+        (SUPP_FIGURES_DIR / "figures_S9-S11" / "figure_S11.png", "figure_S11"),
+        (SUPP_FIGURES_DIR / "figure_S13" / "figure_S13.png", "figure_S13"),
+        (SUPP_FIGURES_DIR / "figure_S12" / "figure_S12.png", "figure_S12"),
+    ]
+
+
 def extract_provenance_from_pngs(logger: logging.Logger, dry_run: bool = False) -> bool:
     """Extract provenance JSON from all PNG figures to Logs/figure_provenance/."""
     log_subsection(logger, "Extracting Provenance from PNGs")
@@ -1168,25 +1194,7 @@ def extract_provenance_from_pngs(logger: logging.Logger, dry_run: bool = False) 
         logger.info(f"  [DRY RUN] Would extract provenance from PNGs")
         return True
     
-    # Define all PNG files to extract from
-    png_files = [
-        # Main figures
-        (FIGURES_DIR / "figure_2.png", "figure_2"),
-        (FIGURES_DIR / "figure_3.png", "figure_3"),
-        (FIGURES_DIR / "figure_4.png", "figure_4"),
-        # Supplementary figures
-        (SUPP_FIGURES_DIR / "figure_S5" / "figure_S5_si.png", "figure_S5_si"),
-        (SUPP_FIGURES_DIR / "figure_S5" / "figure_S5_therapy_request.png", "figure_S5_therapy_request"),
-        (SUPP_FIGURES_DIR / "figure_S5" / "figure_S5_therapy_engagement.png", "figure_S5_therapy_engagement"),
-        (SUPP_FIGURES_DIR / "figures_S6-S8" / "figure_S6.png", "figure_S6"),
-        (SUPP_FIGURES_DIR / "figures_S6-S8" / "figure_S7.png", "figure_S7"),
-        (SUPP_FIGURES_DIR / "figures_S6-S8" / "figure_S8.png", "figure_S8"),
-        (SUPP_FIGURES_DIR / "figures_S9-S11" / "figure_S9.png", "figure_S9"),
-        (SUPP_FIGURES_DIR / "figures_S9-S11" / "figure_S10.png", "figure_S10"),
-        (SUPP_FIGURES_DIR / "figures_S9-S11" / "figure_S11.png", "figure_S11"),
-        (SUPP_FIGURES_DIR / "figure_S13" / "figure_S13.png", "figure_S13"),
-        (SUPP_FIGURES_DIR / "figure_S12" / "figure_S12.png", "figure_S12"),
-    ]
+    png_files = get_final_figure_pngs()
     
     extracted_count = 0
     missing_count = 0
@@ -1224,6 +1232,58 @@ def extract_provenance_from_pngs(logger: logging.Logger, dry_run: bool = False) 
     return no_provenance_count == 0  # Return False if any PNGs are missing provenance
 
 
+def export_publication_tiffs(logger: logging.Logger, dry_run: bool = False) -> bool:
+    """Export publication-ready TIFF copies from final PNG figures without rerendering."""
+    log_subsection(logger, "Exporting Publication TIFFs")
+    
+    try:
+        from PIL import Image
+    except ImportError:
+        logger.error("  ❌ PIL/Pillow not available - cannot export TIFFs")
+        return False
+    
+    if dry_run:
+        logger.info("  [DRY RUN] Would export 300 dpi TIFF copies for all final figures")
+        return True
+    
+    exported_count = 0
+    missing_count = 0
+    
+    for png_path, _ in get_final_figure_pngs():
+        if not png_path.exists():
+            logger.warning(f"  ⚠️ PNG not found for TIFF export: {png_path.name}")
+            missing_count += 1
+            continue
+        
+        tif_path = png_path.with_suffix(".tif")
+        
+        try:
+            with Image.open(png_path) as img:
+                if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+                    rgba = img.convert("RGBA")
+                    background = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+                    export_img = Image.alpha_composite(background, rgba).convert("RGB")
+                else:
+                    export_img = img.convert("RGB")
+                
+                export_img.save(
+                    tif_path,
+                    format="TIFF",
+                    compression="tiff_lzw",
+                    dpi=(300, 300),
+                )
+            
+            logger.info(f"  ✅ Exported: {tif_path.relative_to(PAPER_OUTPUT_BASE)}")
+            exported_count += 1
+        except Exception as e:
+            logger.error(f"  ❌ Error exporting TIFF from {png_path.name}: {e}")
+            missing_count += 1
+    
+    logger.info("")
+    logger.info(f"  Summary: {exported_count} TIFFs exported, {missing_count} missing/failed")
+    return missing_count == 0
+
+
 def generate_readme(logger: logging.Logger, dry_run: bool = False) -> bool:
     """Generate README.md explaining the directory structure."""
     log_subsection(logger, "Generating README")
@@ -1239,16 +1299,17 @@ def generate_readme(logger: logging.Logger, dry_run: bool = False) -> bool:
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 This directory contains all figures, data, and logs generated by the regulatory simulation paper pipeline.
+PNG files are retained for provenance extraction and internal validation; matching `.tif` files are exported at 300 dpi for publication submission.
 
 ## Directory Structure
 
 ```
 {PAPER_OUTPUT_BASE.name}/
 ├── README.md                    # This file
-├── Figures/                     # Main manuscript figures
-│   ├── figure_2.png            # Psychiatrist review breakdown (approved/modified/removed)
-│   ├── figure_3.png            # Model performance metrics (parse rate, sensitivity, specificity, accuracy, F1)
-│   └── figure_4.png            # P1/P2/P_harm risk analysis across failure multiplier values
+├── Figures/                     # Main manuscript figures (.png for provenance, .tif for submission)
+│   ├── figure_2.png / .tif     # Psychiatrist review breakdown (approved/modified/removed)
+│   ├── figure_3.png / .tif     # Model performance metrics (parse rate, sensitivity, specificity, accuracy, F1)
+│   └── figure_4.png / .tif     # P1/P2/P_harm risk analysis across failure multiplier values
 │
 ├── Supplementary_Figures/       # Supplementary figures (manuscript S5-S13; see repo README Figure Guide)
 │   ├── figure_S5/              # Manuscript S5: Sankey diagrams (ground truth → model prediction flows)
@@ -1301,11 +1362,13 @@ This directory contains all figures, data, and logs generated by the regulatory 
 ## Key Files
 
 ### Figures
-- **figure_2.png**: Shows psychiatrist review outcomes for each task
-- **figure_3.png**: Model performance comparison with binary classification metrics
-- **figure_4.png**: Risk analysis showing P1, P2, and P_harm across model sizes
-- **figure_S12/figure_S12.png**: Manuscript **S12** — adjusted FNR vs observed FNR and failure multiplier *M*
-- **figure_S13/figure_S13.png**: Manuscript **S13** — P2 across failure-multiplier *M* values
+- **`*.png`**: Internal figure copies used for provenance extraction and validation
+- **`*.tif`**: Publication-ready 300 dpi exports for journal submission
+- **figure_2.tif**: Shows psychiatrist review outcomes for each task
+- **figure_3.tif**: Model performance comparison with binary classification metrics
+- **figure_4.tif**: Risk analysis showing P1, P2, and P_harm across model sizes
+- **figure_S12/figure_S12.tif**: Manuscript **S12** — adjusted FNR vs observed FNR and failure multiplier *M*
+- **figure_S13/figure_S13.tif**: Manuscript **S13** — P2 across failure-multiplier *M* values
 
 ### Tables
 - **processed_data/supplementary_tables/**: Manuscript **S1–S3** (review counts + `Post_downsampling_n` from finalized inputs)
@@ -1554,6 +1617,11 @@ def run_pipeline(args: argparse.Namespace) -> int:
     if not extract_provenance_from_pngs(logger, args.dry_run):
         logger.warning("  ⚠️ Some figures missing embedded provenance (non-critical)")
         # Don't fail pipeline for missing provenance
+    
+    # Export TIFF copies for publication without changing rendered figure content
+    log_section(logger, "EXPORTING PUBLICATION TIFFS")
+    if not export_publication_tiffs(logger, args.dry_run):
+        logger.warning("  ⚠️ Some TIFF exports failed (non-critical)")
     
     # Generate review statistics (required for manuscript claims verification)
     log_section(logger, "GENERATING REVIEW STATISTICS")
